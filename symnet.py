@@ -2,6 +2,22 @@
 from pyparsing import *
 from sympy import *
 
+"""
+ToDo:
+
+Nutzerinterface entwerfen:
+
+Eingabe ist erstaml klar: 
+	
+	nw = network()
+	nw.parse_netlist('circuit.cir') 
+
+Ausgabe:
+	
+	u = nw.nodal_analyse(u.R3, u(A, B), u.A, u.B)
+	u = [u.R3 =, u.A =, ...] 
+"""
+
 class zweig_element:
   def __init__(self, name):
     self.name = name
@@ -97,6 +113,37 @@ class network:
       ## Vom Zweig die Von-Nach-Knoten zur Knotenmenge hinzufügen
       self.zweigmenge[zweig].node_from = node_from
       self.zweigmenge[zweig].node_to = node_to
+ 
+  def make_incidence(self):
+      """
+      Make the incidence relation
+      """
+      incidence = {}
+      for key in nw.knotenmenge.iterkeys():
+          incidence[key] = []
+      for key, obj in nw.zweigmenge.iteritems():
+          incidence[obj.node_from].append( (Real(+1), key) )
+          incidence[obj.node_to].append( (Real(-1), key) )
+      self.incidence = incidence
+
+  def make_branchVoltages(self):
+      """
+      Make the branch voltages from the loop equations
+      """
+      branchVoltages = {}
+      for key, branch in nw.zweigmenge.iteritems():
+         branchVoltages[branch.name] = \
+             nw.knotenmenge[branch.node_from] - nw.knotenmenge[branch.node_to]
+      self.branchVoltages = branchVoltages
+  
+  def make_nodeVoltages(self):
+      """
+      Aufstellen der Knotenspannungen
+      """
+      var_nodes = [sym for node, sym in nw.knotenmenge.iteritems()]
+      var_nodes.remove(Real(0))
+      var_nodes.sort()
+      self.var_nodes = var_nodes
 
 def get_matrix(eq, syms):
 
@@ -118,14 +165,14 @@ def get_matrix(eq, syms):
             # terms to the left hand side
             equ = eq[i].lhs - eq[i].rhs
         else:
-            equ = Basic.sympify(eq[i])
+            equ = sympify(eq[i])
 
             content = collect(equ.expand(), syms, evaluate=False)
 
             for var, expr in content.iteritems():
                 if isinstance(var, Symbol) and not expr.has(*syms):
                     matrix[i, index[var]] = expr
-                elif isinstance(var, Basic.One) and not expr.has(*syms):
+                elif (var is S.One) and not expr.has(*syms):
                     matrix[i, m] = -expr
                 else:
                     raise "Not a linear system. Can't solve it, yet."
@@ -137,66 +184,55 @@ if __name__ == '__main__':
   nw.parseNetlist("par.cir")
   nw.make_branchSet()
   nw.make_nodeSet()
+  nw.make_incidence()
+  nw.make_branchVoltages()
+  nw.make_nodeVoltages()
+  
   print "Zweigmenge:"
   zweigkeys = nw.zweigmenge.keys()
   zweigkeys.sort()
   for key in zweigkeys:
       print ' ', key, ': Param =', nw.zweigmenge[key].param
-
+  
   print "Knotenmenge:"
   knotenkeys = nw.knotenmenge.keys()
   knotenkeys.sort()
   for key in knotenkeys:
       print ' ', key,': NodeVoltage =', nw.knotenmenge[key]
-
-  ## Aufstellen der Inzidenzrelation
-  inzidenz = {}
-  for key in nw.knotenmenge.iterkeys():
-     inzidenz[key] = []
-  for key, obj in nw.zweigmenge.iteritems():
-     inzidenz[obj.node_from].append( (Real(+1), key) )
-     inzidenz[obj.node_to].append( (Real(-1), key) )
+  
   print "Inzidenzrelation"
-  for key, obj in inzidenz.iteritems():
+  for key, obj in nw.incidence.iteritems():
     print ' ', key, ':', obj
 
   print "Zweigströme:"
   for key, branch in nw.zweigmenge.iteritems():
       print ' ', branch.i, '==', branch.get_i()
   
-  ## Aufstellen der Maschengleichungen
   print "Zweigspannungen:"
   branch_equ = {}
-  for key, branch in nw.zweigmenge.iteritems():
-     branch_equ[branch.name] = \
-        nw.knotenmenge[branch.node_from] - nw.knotenmenge[branch.node_to]
-     print ' ', branch.u, "==", branch_equ[branch.name]
-
-  ## Aufstellen der Knotenspannungen
-  var_nodes = [sym for node, sym in nw.knotenmenge.iteritems()]
-  var_nodes.remove(Real(0))
-  var_nodes.sort()  
+  for key, branch in nw.branchVoltages.iteritems():
+     print ' ', key, "==", branch
 
   ## Aufstellen der Knotengleichungen
   node_equ = {}
-  branch_equ_rest = {}
+  branch_equ = {}
   var_i = {}
-  for node, branches in inzidenz.iteritems():
+  for node, branch_set in nw.incidence.iteritems():
     node_equ[node] = Symbol(node)
     node_equ[node] = 0
-    for sig, branch in branches:
+    for sig, branch in branch_set:
       u = nw.zweigmenge[branch].get_u()
       i = nw.zweigmenge[branch].get_i()
       if i != nw.zweigmenge[branch].i:
-        node_equ[node] += sig*i.subs(u, branch_equ[branch])
+        node_equ[node] += sig*i.subs(u, nw.branchVoltages[branch])
       else:
         node_equ[node] += sig*i
         ## extra Maschengleichung übernehmen
-        branch_equ_rest[branch] = branch_equ[branch] - u
+        branch_equ[branch] = nw.branchVoltages[branch] - u
         var_i[i] = None
   
   ### Aufstellen der Zustandsvariablen
-  var_state = var_nodes + var_i.keys()
+  var_state = nw.var_nodes + var_i.keys()
   print 'Zustandsvariablen:', var_state
 
   ### Aufstellen der Quellvariablen
@@ -215,33 +251,32 @@ if __name__ == '__main__':
     equation.append(node_equ[node].expand())
     print 'Knoten', node, ':', node_equ[node].expand()
   
-  for branch, equ in branch_equ_rest.iteritems():
+  for branch, equ in branch_equ.iteritems():
     equation.append(equ.expand())
     print 'Masche', branch, ':', equ
   C = get_matrix(equation, var_state)
   A=C[:,:-1]
   B=C[:,-1]
   print 'Matrix A :'
-  print A
+  pprint(A)
   print 'Matrix B :'
-  print B
+  pprint(B)
   print ''
 
   det = A.det()
-  pprint(Symbol('det A =') == together(det))
+  pprint(Symbol('det A') == together(det))
   print ''
 
   det_var = {}
   for i in range(len(var_state)):
     A[:,i] = B
     det_var[var_state[i]] = A.det()
-	#det_var[var_state[i]] = collect(A.det(), var_source)
+    #det_var[var_state[i]] = collect(A.det(), var_source)
     A=C[:,:-1]
-  print 'Hallo'
   result = {}
   for var in var_state:
     result[var] = collect(together((det_var[var] / det).expand()), var_source)
-	#result[var] = together(collect((det_var[var] / det).expand(), var_source))
+    #result[var] = together(collect((det_var[var] / det).expand(), var_source))
     pprint(var == result[var])
     print ''
 
