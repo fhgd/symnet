@@ -1,0 +1,6 @@
+* Parallelschaltung
+
+R1 A 0
+R2 A 0
+R3 A B
+V1 B 0
