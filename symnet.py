@@ -3,19 +3,149 @@ from pyparsing import *
 from sympy import *
 
 """
+Gedanken zur internen Struktur:
+
+
+* Knoten:
+
+    # Topologie
+    Menge der angeschlossenen Zweige
+
+    # Netzwerkgrösse
+    Knotenpotential
+
+
+* Zweig:
+
+    # Topologie
+    (Von-Knoten, Nach-Knoten)
+
+    # Netzwerkgrössen
+    Zweigspannung, Zweigstrom
+
+    # Zweigrelation
+    Bauteilinstanz (U=f(i), I=f(u), R, L, C, Norator, Fixator)
+
+ToDo: Unterschied zwischen Zweig und Bauteil?!
+
+
+* Schnitt:
+
+    Menge aus innern Knoten
+
+    Menge aus orientierten Zweigen, deren Knoten sowohl
+    innerhalb als auch auserhalb des Schnittes liegen
+
+    Von Knotenmenge auf Zweigmenge:
+        aus der Menge aller Zweige, welche zur Knotenmenge gehören,
+        diejenigen auswählen, welche einen Knoten beitzen, der
+        nicht zur Knotenmenge gehört
+
+
+* Masche:
+
+    Liste von Knoten und Zweigen, die einen geschlossenen Weg von
+    Knoten zu Knoten über Zweige angeben
+
+    Zweig = Von-Knoten - Nach-Knoten
+    Knoten - Zweig = Zweig so orientieren, dass er an Knoten anschließt
+    Knoten1 - Knoten2 = Knotenspannung
+
+
 ToDo:
+        Baum und Cobaum
+        Fundamentalmaschen und -schnitte
+        modifizierte KSA
+        Maschenströme sinnvoll definieren
 
-Nutzerinterface entwerfen:
 
-Eingabe ist erstaml klar:
 
+Nutzerinterface:
+
+
+* Eingabe:
+
+    # leeres Netzwerk
     nw = network()
+
+    # nur Knoten, keine Zweige
+    nw = network(Knotenmenge)
+
+    # Netzliste = Zweigmenge
+    # Knotenmenge aus den Von-Nach-Knoten der einzelnen Zweige bestimmen
+    nw = network(Zweigmenge)
+
+    # Netzliste aus Datei
+    nw = network('circuit.cir')
     nw.parse_netlist('circuit.cir')
 
-Ausgabe:
 
-    u = nw.nodal_analyse(u.R3, u(A, B), u.A, u.B)
-    u = [u.R3 =, u.A =, ...]
+* Modifikationen:
+
+    # Sehr schön wäre ja bestimmt: (Frage Zweig-Bauteil)
+    nw += zweig
+    nw -= zweig
+    nw += knoten
+    nw -= knoten
+
+    # Hinzufügen
+    nw.add(knoten)
+    nw.add(zweig) # automatisch Knoten hinzufügen
+
+    nw.nodes.add(knoten)
+    nw.branches.add(zweig)
+
+    # Löschen
+    nw.remove(knoten)
+    nw.remove(zweig)
+
+    nw.branches.remove(zweig)
+    nw.nodes.remove(node) # Methode überschreiben: auch Zweige entfernen
+
+    del nw.zweig
+    del nw.knoten # löscht auch alle dazugehörigen Zweige
+
+
+* Ausgabe:
+
+    # alle Knoten als set (Knotenmenge)
+    nw.nodes
+
+    # alle Zweige als set (Zweigmenge)
+    nw.branches
+
+    # unabhängige Knotengleichungen
+    len(nw.nodes) - 1
+
+    # unabhängige Maschengleichungen
+    len(nw.branches) - len(nw.nodes) + 1
+
+    # Wenn das netzwerk aus mehreren nichtzusammenhängenden
+    # Teilnetzwerken besteht: 1 <=> Anzahl der Teilnetzwerke
+
+    # Quellen mit f(0) != 0 ausgeben
+    nw.i.sources
+    nw.u.sources
+    nw.sources
+
+    # Lösung für eine Netzwerkgrösse = func(Quellen)
+    nw.i.zweig
+    nw.u.zweig
+
+    nw.u.knoten == u_knoten + konst
+    nw.u.knoten1.knoten2 == u_knoten1 - u_knoten2
+    nw.relnode = bezugsknoten
+    nw.u.knoten == u_knoten - u_relnode
+
+    # oder auch
+    nw.u(zweig)
+    nw.u(knoten)
+    nw.u(Von-Knoten, Nach-Knoten)
+
+    # Analyse für Zweiggrössen (nw.u, nw.i) festlegen
+    nw.analyse = nodal
+    nw.analyse() == Liste der knotenspannungen
+
 """
 
 class branch_element:
