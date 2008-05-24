@@ -18,267 +18,288 @@ Ausgabe:
 	u = [u.R3 =, u.A =, ...] 
 """
 
-class zweig_element:
-  def __init__(self, name):
-    self.name = name
-    self.type = self.name[0]
-    self.node_from = None
-    self.node_to = None
-    self.u = Symbol('U_'+self.name)
-    self.i = Symbol('I_'+self.name)
-    self.setup()
+class branch_element:
+	def __init__(self, name):
+		self.name = name
+		self.type = self.name[0]
+		self.node_from = None
+		self.node_to = None
+		self.u = Symbol('U_'+self.name)
+		self.i = Symbol('I_'+self.name)
+		self.setup()
 
-  def setup(self):
-    self.param = None
+	def setup(self):
+		self.param = None
 
-  def __str__(self):
-    return self.name
+	def __str__(self):
+		return self.name
 
-class resistor(zweig_element):
-  def setup(self):
-    self.param = Symbol(self.name)
-  def get_u(self):
-    return self.u
-  def get_i(self):
-    ## i = u/R
-    return self.u/self.param     
+class resistor(branch_element):
+	def setup(self):
+		self.param = Symbol(self.name)
+	def get_u(self):
+		return self.u
+	def get_i(self):
+		## I = U/R
+		return self.u/self.param
 
-class current_source(zweig_element):
-  def setup(self):
-    self.param = Symbol(self.name+'_0')
-  def get_u(self):
-    return self.u
-  def get_i(self):
-    ## i = i_0
-    return self.param     
+class current_source(branch_element):
+	def setup(self):
+		self.param = Symbol(self.name+'_0')
+	def get_u(self):
+		return self.u
+	def get_i(self):
+		## I = I_0
+		return self.param
 
-class voltage_source(zweig_element):
-    def setup(self):
-        self.param = Symbol(self.name+'_0')
-    def get_u(self):
-        ## u = u_0
-        return self.param
-    def get_i(self):
-        return self.i     
+class voltage_source(branch_element):
+	def setup(self):
+		self.param = Symbol(self.name+'_0')
+	def get_u(self):
+		## U = U_0
+		return self.param
+	def get_i(self):
+		return self.i
 
-class network:
-  def parseNetlist(self, fname, bezugsknoten = '0'): 
-    """
-    Parsen der Netliste
-    """
-    self.relNode = bezugsknoten
-    COMMENT = "*" + Optional(restOfLine)
-    NAME = Word(alphanums+"_")
-    TYPE = oneOf('R L C I V',caseless=True)
-    ELEMENT = Combine(TYPE+NAME)
-    NETLIST = Dict(ZeroOrMore( Group(ELEMENT + NAME + NAME) ))
-    NETLIST.ignore(COMMENT)
-    self.data = NETLIST.parseFile(fname)
-    #return self.data
-
-  def make_nodeSet(self):
-    """ 
-    Aus Netliste die Knotenmenge erstellen
-    """
-    self.knotenmenge = {}
-    for zweig in self.data.keys():
-      node_from = self.data[zweig][0]
-      node_to   = self.data[zweig][1]
-      ## Vom Zweig den Von-Knoten zur Knotenmenge hinzufügen
-      self.knotenmenge[node_from] = Symbol('U_'+node_from+self.relNode)
-      ## Vom Zweig den Nach-Knoten zur Knotenmenge hinzufügen
-      self.knotenmenge[node_to] = Symbol('U_'+node_to+self.relNode)
-    ## Bezugsknotenspannung Null setzen
-    nw.knotenmenge[nw.relNode] = Real(0)
-
-  def make_branchSet(self):
-    """ 
-    Aus Netliste die Zweigmenge erstellen
-    """
-    self.zweigmenge = {}
-    for zweig in self.data.keys():
-      x = zweig[0]
-      node_from = self.data[zweig][0]
-      node_to   = self.data[zweig][1]
-      ## Instanz der Zweig-Klasse erzeugen
-      if   x == 'R':
-        self.zweigmenge[zweig] = resistor(zweig)
-      elif x == 'I':
-        self.zweigmenge[zweig] = current_source(zweig)
-      elif x == 'V':
-        self.zweigmenge[zweig] = voltage_source(zweig)
-      else:
-        self.zweigmenge[zweig] = zweig_element(zweig)
-        print "Unbekanter Typ:", zweig
-      ## Vom Zweig die Von-Nach-Knoten zur Knotenmenge hinzufügen
-      self.zweigmenge[zweig].node_from = node_from
-      self.zweigmenge[zweig].node_to = node_to
- 
-  def make_incidence(self):
-      """
-      Make the incidence relation
-      """
-      incidence = {}
-      for key in nw.knotenmenge.iterkeys():
-          incidence[key] = []
-      for key, obj in nw.zweigmenge.iteritems():
-          incidence[obj.node_from].append( (Real(+1), key) )
-          incidence[obj.node_to].append( (Real(-1), key) )
-      self.incidence = incidence
-
-  def make_branchVoltages(self):
-      """
-      Make the branch voltages from the loop equations
-      """
-      branchVoltages = {}
-      for key, branch in nw.zweigmenge.iteritems():
-         branchVoltages[branch.name] = \
-             nw.knotenmenge[branch.node_from] - nw.knotenmenge[branch.node_to]
-      self.branchVoltages = branchVoltages
-  
-  def make_nodeVoltages(self):
-      """
-      Aufstellen der Knotenspannungen
-      """
-      var_nodes = [sym for node, sym in nw.knotenmenge.iteritems()]
-      var_nodes.remove(Real(0))
-      var_nodes.sort()
-      self.var_nodes = var_nodes
+class node:
+	def __init__(self, name):
+		self.name = name
+		self.v = Symbol('V_'+self.name+'0')
+		self.branches = []
 
 def get_matrix(eq, syms):
+	"""
+	Copy from "def solve(...)" in sympy/solvers/solvers.py
+	"""
+	if isinstance(syms, Basic):
+		syms = [syms]
 
-    if isinstance(syms, Basic):
-        syms = [syms]
+	# augmented matrix
+	n, m = len(eq), len(syms)
+	matrix = zeronm(n, m+1)
 
-    # augmented matrix
-    n, m = len(eq), len(syms)
-    matrix = zeronm(n, m+1)
+	index = {}
 
-    index = {}
+	for i in range(0, m):
+		index[syms[i]] = i
 
-    for i in range(0, m):
-        index[syms[i]] = i
+	for i in range(0, n):
+		if isinstance(eq[i], Equality):
+			# got equation, so move all the
+			# terms to the left hand side
+			equ = eq[i].lhs - eq[i].rhs
+		else:
+			equ = sympify(eq[i])
 
-    for i in range(0, n):
-        if isinstance(eq[i], Equality):
-            # got equation, so move all the
-            # terms to the left hand side
-            equ = eq[i].lhs - eq[i].rhs
-        else:
-            equ = sympify(eq[i])
+			content = collect(equ.expand(), syms, evaluate=False)
 
-            content = collect(equ.expand(), syms, evaluate=False)
+			for var, expr in content.iteritems():
+				if isinstance(var, Symbol) and not expr.has(*syms):
+					matrix[i, index[var]] = expr
+				elif (var is S.One) and not expr.has(*syms):
+					matrix[i, m] = -expr
+				else:
+					raise "Not a linear system. Can't solve it, yet."
+	return matrix
 
-            for var, expr in content.iteritems():
-                if isinstance(var, Symbol) and not expr.has(*syms):
-                    matrix[i, index[var]] = expr
-                elif (var is S.One) and not expr.has(*syms):
-                    matrix[i, m] = -expr
-                else:
-                    raise "Not a linear system. Can't solve it, yet."
-    return matrix
+class network:
+	def parseNetlist(self, fname, gnd = '0'):
+		"""
+		Parse the Netlist
+		"""
+		self.gnd_name = gnd
+		COMMENT = "*" + Optional(restOfLine)
+		NAME = Word(alphanums+"_")
+		TYPE = oneOf('R L C I V',caseless=True)
+		ELEMENT = Combine(TYPE+NAME)
+		NETLIST = Dict(ZeroOrMore( Group(ELEMENT + NAME + NAME) ))
+		NETLIST.ignore(COMMENT)
+		self.data = NETLIST.parseFile(fname)
 
+	def make_nodeSet(self):
+		"""
+		Make NodeSet from Netlist
+		"""
+		self.nodeSet = {}
+		for branch in self.data.keys():
+			node_from, node_to = self.data[branch][:]
+			self.nodeSet[node_from] = node(node_from)
+			self.nodeSet[node_to] = node(node_to)
+		## Set the GND-Node to Zero
+		self.gnd_node = node(self.gnd_name)
+		self.gnd_node.v = Real(0)
+		self.nodeSet[self.gnd_name] = self.gnd_node
+
+	def make_branchSet(self):
+		"""
+		Make branchSet from Netlist
+		"""
+		self.branchSet = {}
+		for branch in self.data.keys():
+			node_from, node_to = self.data[branch][:]
+			## first Letter of the name is the element-type
+			element = branch[0]
+			## Make instance of the right branch-class
+			if element == 'R':
+				self.branchSet[branch] = resistor(branch)
+			elif element == 'I':
+				self.branchSet[branch] = current_source(branch)
+			elif element == 'V':
+				self.branchSet[branch] = voltage_source(branch)
+			else:
+				self.branchSet[branch] = branch_element(branch)
+				print "Unknown Typ:", branch
+
+			self.branchSet[branch].node_from = self.nodeSet[node_from]
+			self.branchSet[branch].node_to = self.nodeSet[node_to]
+
+	def make_incidence(self):
+		"""
+		Make the incidence relation
+		"""
+		for key, branch in self.branchSet.iteritems():
+			self.nodeSet[branch.node_from.name].branches.append( (Real(+1), branch) )
+			self.nodeSet[branch.node_to.name].branches.append( (Real(-1), branch) )
+
+	def make_branchVoltages(self):
+		"""
+		Make the branch voltages from the loop equations
+		"""
+		branchVoltages = {}
+		for key, branch in self.branchSet.iteritems():
+			branchVoltages[branch.name] = \
+				self.nodeSet[branch.node_from.name].v - self.nodeSet[branch.node_to.name].v
+		self.branchVoltages = branchVoltages
+
+	def make_nodeVoltages(self):
+		"""
+		Make the node-Voltages
+		"""
+		self.var_nodes = [sym for node, sym in self.nodeSet.iteritems()]
+		self.var_nodes.remove(self.gnd_node)
+		self.var_nodes.sort()
+		#self.var_nodes = var_nodes
+
+	def make_nodeEqu(self):
+		"""
+		Make the node equations
+		"""
+		node_equ = {}
+		branch_equ = {}
+		var_i = {}
+
+		for key, node in self.nodeSet.iteritems():
+			node_equ[node.name] = Real(0)
+			for sig, branch in node.branches:
+				u = branch.get_u()
+				i = branch.get_i()
+				u_loop = self.branchVoltages[branch.name]
+				if i is not branch.i:
+					node_equ[node.name] += sig*i.subs(u, u_loop)
+				else:
+					node_equ[node.name] += sig*i
+					branch_equ[branch.name] = u_loop - u
+					var_i[i] = None
+
+		self.node_equ = node_equ
+		self.branch_equ = branch_equ
+		self.var_i = var_i
+
+
+	def make_stateVar(self):
+		self.var_state = [var.v for var in self.var_nodes]
+		for var in self.var_i.keys():
+			self.var_state.append(var)
+
+	def make_sourceVar(self):
+		var_source = []
+		for name, branch in self.branchSet.iteritems():
+			if name[0] == 'I' or name[0] == 'V':
+				var_source.append(branch.param)
+		self.var_source = var_source
+
+	def solve(self, vars):
+		"""
+		Solve the state equations
+		"""
+		## delete the equation for the gnd node
+		self.node_equ.pop(self.gnd_name)
+		equ_key = self.node_equ.keys()
+		equ_key.sort()
+		equation = []
+		## get all node equations
+		for node in equ_key:
+			equation.append(nw.node_equ[node].expand())
+		## get all loop equations
+		for branch, equ in self.branch_equ.iteritems():
+			equation.append(equ.expand())
+		self.equation = equation
+
+		C = get_matrix(self.equation, self.var_state)
+		## get the lhs matrix (coefficient matrix)
+		A=C[:,:-1]
+		## get the rhs matrix
+		B=C[:,-1]
+		self.C = C
+		self.A = A
+		self.B = B
+		det = A.det()
+
+		det_var = {}
+		for v in vars:
+			i = self.var_state.index(v)  # position of v in var_state
+			A[:,i] = B # put the lhs column to the i-column of the rhs matrix
+			det_var[self.var_state[i]] = A.det()
+			#det_var[var_state[i]] = collect(A.det(), var_source)
+			A=C[:,:-1] # restore the rhs matrix
+
+		result = {}
+		for v in vars:
+			result[v] = collect(together((det_var[v] / det).expand()), self.var_source)
+		return result
 
 if __name__ == '__main__':
-  nw = network()
-  nw.parseNetlist("par.cir")
-  nw.make_branchSet()
-  nw.make_nodeSet()
-  nw.make_incidence()
-  nw.make_branchVoltages()
-  nw.make_nodeVoltages()
-  
-  print "Zweigmenge:"
-  zweigkeys = nw.zweigmenge.keys()
-  zweigkeys.sort()
-  for key in zweigkeys:
-      print ' ', key, ': Param =', nw.zweigmenge[key].param
-  
-  print "Knotenmenge:"
-  knotenkeys = nw.knotenmenge.keys()
-  knotenkeys.sort()
-  for key in knotenkeys:
-      print ' ', key,': NodeVoltage =', nw.knotenmenge[key]
-  
-  print "Inzidenzrelation"
-  for key, obj in nw.incidence.iteritems():
-    print ' ', key, ':', obj
+	nw = network()
+	#nw.parseNetlist("par.cir")
+	nw.parseNetlist("bridge.cir")
+	nw.make_nodeSet()
+	nw.make_branchSet()
+	nw.make_incidence()
+	nw.make_branchVoltages()
+	nw.make_nodeVoltages()
+	nw.make_nodeEqu()
+	nw.make_stateVar()
+	nw.make_sourceVar()
 
-  print "Zweigströme:"
-  for key, branch in nw.zweigmenge.iteritems():
-      print ' ', branch.i, '==', branch.get_i()
-  
-  print "Zweigspannungen:"
-  branch_equ = {}
-  for key, branch in nw.branchVoltages.iteritems():
-     print ' ', key, "==", branch
+	print "branch set:"
+	branchkeys = nw.branchSet.keys()
+	branchkeys.sort()
+	for key in branchkeys:
+		print ' ', key, ': Param =', nw.branchSet[key].param
 
-  ## Aufstellen der Knotengleichungen
-  node_equ = {}
-  branch_equ = {}
-  var_i = {}
-  for node, branch_set in nw.incidence.iteritems():
-    node_equ[node] = Symbol(node)
-    node_equ[node] = 0
-    for sig, branch in branch_set:
-      u = nw.zweigmenge[branch].get_u()
-      i = nw.zweigmenge[branch].get_i()
-      if i != nw.zweigmenge[branch].i:
-        node_equ[node] += sig*i.subs(u, nw.branchVoltages[branch])
-      else:
-        node_equ[node] += sig*i
-        ## extra Maschengleichung übernehmen
-        branch_equ[branch] = nw.branchVoltages[branch] - u
-        var_i[i] = None
-  
-  ### Aufstellen der Zustandsvariablen
-  var_state = nw.var_nodes + var_i.keys()
-  print 'Zustandsvariablen:', var_state
+	print "node set:"
+	nodeKeys = nw.nodeSet.keys()
+	nodeKeys.sort()
+	for key in nodeKeys:
+		print ' ', key,': NodeVoltage =', nw.nodeSet[key].v
 
-  ### Aufstellen der Quellvariablen
-  var_source = []
-  for name, branch in nw.zweigmenge.iteritems():
-	if name[0] == 'I' or name[0] == 'V':
-		var_source.append(branch.param)
+	print "branch currents:"
+	for key, branch in nw.branchSet.iteritems():
+		print ' ', branch.i, '==', branch.get_i()
 
-  ### Lösen der Zustandsgleichungen
-  # Knotengleichung des Bezugsknoten verwerfen
-  node_equ.pop(nw.relNode)
-  equ_key = node_equ.keys()
-  equ_key.sort()
-  equation = []
-  for node in equ_key:
-    equation.append(node_equ[node].expand())
-    print 'Knoten', node, ':', node_equ[node].expand()
-  
-  for branch, equ in branch_equ.iteritems():
-    equation.append(equ.expand())
-    print 'Masche', branch, ':', equ
-  C = get_matrix(equation, var_state)
-  A=C[:,:-1]
-  B=C[:,-1]
-  print 'Matrix A :'
-  pprint(A)
-  print 'Matrix B :'
-  pprint(B)
-  print ''
+	print "branch voltages:"
+	branch_equ = {}
+	for key, branch in nw.branchVoltages.iteritems():
+		print ' ', key, "==", branch
 
-  det = A.det()
-  pprint(Symbol('det A') == together(det))
-  print ''
+	print 'state variables:', nw.var_state
+	print ''
 
-  det_var = {}
-  for i in range(len(var_state)):
-    A[:,i] = B
-    det_var[var_state[i]] = A.det()
-    #det_var[var_state[i]] = collect(A.det(), var_source)
-    A=C[:,:-1]
-  result = {}
-  for var in var_state:
-    result[var] = collect(together((det_var[var] / det).expand()), var_source)
-    #result[var] = together(collect((det_var[var] / det).expand(), var_source))
-    pprint(var == result[var])
-    print ''
+	VL=Symbol('V_L0')
+	VR=Symbol('V_R0')
+	result=nw.solve([VL, VR])
+	pprint( Symbol('V_M')==collect(together(result[VL]-result[VR]), Symbol('V1_0')) )
+
 
 
 
