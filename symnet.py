@@ -192,6 +192,33 @@ class branch2(object):
         self.node1 = property(lambda self: self.nodes[0])
         self.node2 = property(lambda self: self.nodes[1])
 
+class resistor2(branch2):
+    def __init__(self, name):
+        super(resistor2, self).__init__(name)
+        self.param = Symbol(self.name)
+    def fV(self):
+        # V = I*R
+        return self.I*self.param
+    def fI(self):
+        # I = U/R
+        return self.u/self.param
+
+class current2(branch2):
+    def __init__(self, name):
+        super(current2, self).__init__(name)
+        self.param = Symbol(self.name+'_0')
+    def fI(self):
+        ## I = I_0
+        return self.param
+
+class voltage2(branch2):
+    def __init__(self, name):
+        super(voltage2, self).__init__(name)
+        self.param = Symbol(self.name+'_0')
+    def fI(self):
+        ## V = V_0
+        return self.param
+
 class branch_element:
     def __init__(self, name):
         self.name = name
