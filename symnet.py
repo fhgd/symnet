@@ -207,21 +207,13 @@ class current2(branch2):
         return self.param
 
 """
-class cc_current2(current2):
-    def __init__(self, name, branch):
+class dcurrent2(current2):
+    def __init__(self, name, control):
         super(cc_current2, self).__init__(name)
-        self.control_branch = branch
+        self.control = control
     def fI(self):
-        ## I = k * branch.I
-        return self.param * control_branch.I
-
-class vc_current2(current2):
-    def __init__(self, name, branch):
-        super(vc_current2, self).__init__(name)
-        self.control_branch = control_branch
-    def fI(self):
-        ## I = G * branch.V
-        return self.param * control_branch.V
+        ## I = param * network variable
+        return self.param * self.control
 """
 
 class voltage2(branch2):
