@@ -9,24 +9,35 @@ Gedanken zur internen Struktur:
 * Knoten:
 
     # Topologie
-    Menge der angeschlossenen Zweige
+    Get-Funktion: Menge der angeschlossenen Zweige
 
     # Netzwerkgrösse
-    Knotenpotential
+    Var-Symbol: Knotenpotential
 
 
 * Zweig:
 
     # Topologie
-    (Von-Knoten, Nach-Knoten)
+    Var: (Von-Knoten, Nach-Knoten)
 
     # Netzwerkgrössen
-    Zweigspannung, Zweigstrom
+    Var-Symbol: Zweigspannung, Zweigstrom
 
     # Zweigrelation
-    Bauteilinstanz (U=f(i), I=f(u), R, L, C, Norator, Fixator)
+    Funktion: Bauteilinstanz (U=f(i), I=f(u), R, L, C, Norator, Fixator)
 
 ToDo: Unterschied zwischen Zweig und Bauteil?!
+
+    Keiner, da ein Zweig = Von-Nach-Knoten + Zweigrelation
+    und ein Bauteil ja auch nur als Relation zw. I/U dargestellt wird.
+
+    Schon alleine die benötigte Existenz von Zweig-I/U impliziert die
+    Existenz zweier Knoten: Eine Spannung existiert nur zw zwei Knoten,
+    Ein Strom kann nur in einem Pfad fließen, der wiederum zw zwei
+    (oder mehreren) Knoten liegt.
+
+    Bauteile mit mehr als zwei Knoten, sollten als Teilnetzwerke
+    behandelt werden.
 
 
 * Schnitt:
