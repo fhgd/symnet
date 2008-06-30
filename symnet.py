@@ -187,15 +187,13 @@ class branch2(object):
         self.name = name
         self.V = Symbol('V_'+self.name)
         self.I = Symbol('I_'+self.name)
+        self.param = Symbol(self.name)
 
         self.nodes = None, None
         self.node1 = property(lambda self: self.nodes[0])
         self.node2 = property(lambda self: self.nodes[1])
 
 class resistor2(branch2):
-    def __init__(self, name):
-        super(resistor2, self).__init__(name)
-        self.param = Symbol(self.name)
     def fV(self):
         # V = I*R
         return self.I*self.param
@@ -204,21 +202,26 @@ class resistor2(branch2):
         return self.u/self.param
 
 class current2(branch2):
-    def __init__(self, name):
-        super(current2, self).__init__(name)
-        self.param = Symbol(self.name+'_0')
     def fI(self):
         ## I = I_0
         return self.param
 
 """
-class dcurrent2(branch2):
-    def __init__(self, name, branch_symbol):
-        super(dcurrent2, self).__init__(name)
-        self.param = Symbol(self.name)
+class cc_current2(current2):
+    def __init__(self, name, branch):
+        super(cc_current2, self).__init__(name)
+        self.control_branch = branch
     def fI(self):
-        ## I = I_0
-        return self.param
+        ## I = k * branch.I
+        return self.param * control_branch.I
+
+class vc_current2(current2):
+    def __init__(self, name, branch):
+        super(vc_current2, self).__init__(name)
+        self.control_branch = control_branch
+    def fI(self):
+        ## I = G * branch.V
+        return self.param * control_branch.V
 """
 
 class voltage2(branch2):
