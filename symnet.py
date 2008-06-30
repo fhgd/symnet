@@ -166,8 +166,8 @@ class branch2(object):
         self.I = Symbol('I_'+self.name)
 
         self.nodes = None, None
-        self.node1 = property(lambda : self.nodes[0])
-        self.node2 = property(lambda : self.nodes[1])
+        self.node1 = property(lambda self: self.nodes[0])
+        self.node2 = property(lambda self: self.nodes[1])
 
 class node2(object):
     def __init__(self, name):
@@ -177,7 +177,7 @@ class node2(object):
         self.name = name
         self.v0 = Symbol('v_'+self.name+'0')
 
-        def get_branches():
+        def get_branches(self):
             pass
             """
             _branches = set()
