@@ -159,6 +159,25 @@ Nutzerinterface:
 
 """
 
+class branch2(object):
+    def __init__(self, name):
+        self.name = name
+        self.V = Symbol('V_'+self.name)
+        self.I = Symbol('I_'+self.name)
+
+        self.nodes = None, None
+        self.node1 = property(lambda : self.nodes[0])
+        self.node2 = property(lambda : self.nodes[1])
+
+class node2(object):
+    def __init__(self, name):
+        self.name = name
+        self.v0 = Symbol('v_'+self.name+'0')
+
+        def get_branches():
+            pass
+        self.branches = property(get_branches)
+
 class branch_element:
     def __init__(self, name):
         self.name = name
