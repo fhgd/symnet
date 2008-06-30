@@ -206,23 +206,27 @@ class current2(branch2):
         ## I = I_0
         return self.param
 
-"""
 class dcurrent2(current2):
     def __init__(self, name, control):
-        super(cc_current2, self).__init__(name)
+        super(dcurrent2, self).__init__(name)
         self.control = control
     def fI(self):
         ## I = param * network variable
         return self.param * self.control
-"""
 
 class voltage2(branch2):
-    def __init__(self, name):
-        super(voltage2, self).__init__(name)
-        self.param = Symbol(self.name+'_0')
-    def fI(self):
+    def fV(self):
         ## V = V_0
         return self.param
+
+class dvoltage2(branch2):
+    def __init__(self, name, control):
+        super(dvoltage2, self).__init__(name)
+        self.control = control
+    def fV(self):
+        ## U = param * network variable
+        return self.param * self.control
+
 
 class branch_element:
     def __init__(self, name):
