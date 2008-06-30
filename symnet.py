@@ -199,7 +199,18 @@ class resistor2(branch2):
         return self.I*self.param
     def fI(self):
         # I = U/R
-        return self.u/self.param
+        return self.V/self.param
+
+class conductance2(branch2):
+    """
+    Leitwert vielleicht auch als spannungsabhängige Stromquelle?
+    """
+    def fV(self):
+        # V = I/G
+        return self.I/self.param
+    def fI(self):
+        # I = U*G
+        return self.V*self.param
 
 class current2(branch2):
     def fI(self):
@@ -226,7 +237,6 @@ class dvoltage2(branch2):
     def fV(self):
         ## U = param * network variable
         return self.param * self.control
-
 
 class branch_element:
     def __init__(self, name):
