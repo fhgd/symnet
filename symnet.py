@@ -39,6 +39,13 @@ ToDo: Unterschied zwischen Zweig und Bauteil?!
     Bauteile mit mehr als zwei Knoten, sollten als Teilnetzwerke
     behandelt werden.
 
+Zweigrelation:
+
+    Als f() implementieren und dann zB:
+
+      fU = f
+      fI = solve(self.U==f, self.I)
+
 
 * Schnitt:
 
