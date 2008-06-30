@@ -211,6 +211,16 @@ class current2(branch2):
         ## I = I_0
         return self.param
 
+"""
+class dcurrent2(branch2):
+    def __init__(self, name, branch_symbol):
+        super(dcurrent2, self).__init__(name)
+        self.param = Symbol(self.name)
+    def fI(self):
+        ## I = I_0
+        return self.param
+"""
+
 class voltage2(branch2):
     def __init__(self, name):
         super(voltage2, self).__init__(name)
