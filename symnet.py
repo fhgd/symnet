@@ -250,10 +250,11 @@ class dvoltage2(branch2):
         return self.param * self.control
 
 class fixator2(branch2):
-    def __init__(self, name, v0, i0):
+    def __init__(self, name):
         super(dvoltage2, self).__init__(name)
-        self.v0 = v0
-        self.i0 = i0
+        del self.param
+        self.v0 = Symbol('V_0'+self.name)
+        self.i0 = Symbol('I_0'+self.name)
     def fV(self):
         return self.v0
     def fI(self):
