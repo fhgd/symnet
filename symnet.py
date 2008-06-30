@@ -158,17 +158,6 @@ Nutzerinterface:
     nw.analyse() == Liste der knotenspannungen
 
 """
-
-class branch2(object):
-    def __init__(self, name):
-        self.name = name
-        self.V = Symbol('V_'+self.name)
-        self.I = Symbol('I_'+self.name)
-
-        self.nodes = None, None
-        self.node1 = property(lambda self: self.nodes[0])
-        self.node2 = property(lambda self: self.nodes[1])
-
 class node2(object):
     def __init__(self, name):
         # Name nur zur leserlichen Ausgabe verwenden,
@@ -192,6 +181,16 @@ class node2(object):
         self.branches = property(get_branches)
         # Oder sollte get_branches(node) lieber als Methode des Netzwerks
         # definiert werden?
+
+class branch2(object):
+    def __init__(self, name):
+        self.name = name
+        self.V = Symbol('V_'+self.name)
+        self.I = Symbol('I_'+self.name)
+
+        self.nodes = None, None
+        self.node1 = property(lambda self: self.nodes[0])
+        self.node2 = property(lambda self: self.nodes[1])
 
 class branch_element:
     def __init__(self, name):
