@@ -190,6 +190,8 @@ class node2(object):
             # Unterklassen von Knoten oder
             # ist ein Knoten eine Unterklasse vom Netzwerk?
         self.branches = property(get_branches)
+        # Oder sollte get_branches(node) lieber als Methode des Netzwerks
+        # definiert werden?
 
 class branch_element:
     def __init__(self, name):
