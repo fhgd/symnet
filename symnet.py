@@ -46,6 +46,10 @@ Zweigrelation:
       fU = f
       fI = solve(self.U==f, self.I)
 
+    Ganz allgemein: f(alle Netzwerkgrößen)
+
+    Verallgemeinerung: mehrere Parameter, mehrere abhängige Steuergrößen,
+        mehrere Definitionsgleichungen (insbesondere fU, fI) verwalten
 
 * Schnitt:
 
