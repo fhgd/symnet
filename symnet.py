@@ -245,6 +245,25 @@ class dvoltage2(branch2):
         ## U = param * network variable
         return self.param * self.control
 
+class fixator2(branch2):
+    def __init__(self, name, v0, i0):
+        super(dvoltage2, self).__init__(name)
+        self.v0 = v0
+        self.i0 = i0
+    def fV(self):
+        return self.v0
+    def fI(self):
+        return self.i0
+
+class nullator2(branch2):
+    def fV(self):
+        return 0
+    def fI(self)
+        return 0
+
+class norator2(branch2):
+    pass
+
 class branch_element:
     def __init__(self, name):
         self.name = name
