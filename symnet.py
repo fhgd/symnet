@@ -171,11 +171,24 @@ class branch2(object):
 
 class node2(object):
     def __init__(self, name):
+        # Name nur zur leserlichen Ausgabe verwenden,
+        # sonst versuchen, nur über das Objekt (Knoten)
+        # selbst zuzugreifen
         self.name = name
         self.v0 = Symbol('v_'+self.name+'0')
 
         def get_branches():
             pass
+            """
+            _branches = set()
+            for branch in nw.branches:
+                if self in branch.nodes:
+                    _branches.add(branch)
+            return _branches
+            """
+            # Frage: ist wegen nw.branches das Netzwerk eine
+            # Unterklassen von Knoten oder
+            # ist ein Knoten eine Unterklasse vom Netzwerk?
         self.branches = property(get_branches)
 
 class branch_element:
