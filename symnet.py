@@ -66,7 +66,7 @@ Zweigrelation:
 
 * Masche:
 
-    Liste von Knoten und Zweigen, die einen geschlossenen Weg von
+    Liste von Knoten und Zweigen, die einen *geschlossenen Weg* von
     Knoten zu Knoten über Zweige angeben
 
     Zweig = Von-Knoten - Nach-Knoten
@@ -74,12 +74,33 @@ Zweigrelation:
     Knoten1 - Knoten2 = Knotenspannung
 
 
+* Baum:
+
+    Ist eine Menge *nicht geschlossener Wege* im Netzwerk, die jedoch
+    mit *einem* Zweig (vielleicht auch Weg) aus dem Nichtbaum
+    geschlossen werden.
+
+    Da ein Weg nicht notwendiger Weise ein Zweig sein muss, ist auch
+    kein extra virtueller Baum nötig. Jedoch kann der Baum auf die
+    Eigenschaft
+
+        .is_virtual = True|False
+
+    geprüft werden.
+
+
+* Cobaum (Nichtbaum):
+
+    Ist die Komplementärmenge zum Baum bzgl. des gesamten Netzwerkes.
+
+    Frage: Besteht der Nichtbaum nur aus 'echten' Wegen, nämlich Zweigen,
+    oder können auch 'Luftwege' wie Knotenspannungen erlaubt sein?
+
 ToDo:
-        Baum und Cobaum
         Fundamentalmaschen und -schnitte
         modifizierte KSA
         Maschenströme sinnvoll definieren
-
+        Mehrpole
 
 
 Nutzerinterface:
