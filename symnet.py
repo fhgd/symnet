@@ -11,9 +11,6 @@ Gedanken zur internen Struktur:
     # Topologie
     Get-Funktion: Menge der angeschlossenen Zweige
 
-    # Netzwerkgrösse
-    Var-Symbol: Knotenpotential
-
 
 * Zweig:
 
@@ -196,7 +193,6 @@ class node2(object):
         # sonst versuchen, nur über das Objekt (Knoten)
         # selbst zuzugreifen
         self.name = name
-        self.v0 = Symbol('v_'+self.name+'0')
 
         def get_branches(self):
             pass
@@ -284,7 +280,7 @@ class fixator2(branch2):
 class nullator2(branch2):
     def fV(self):
         return 0
-    def fI(self)
+    def fI(self):
         return 0
 
 class norator2(branch2):
