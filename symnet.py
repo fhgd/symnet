@@ -86,6 +86,20 @@ Zweigrelation:
     geprüft werden.
 
 
+* Bezeichnung der Knotenspannungen (= Baumspannungen):
+
+    Da der Baum der Knotenspannungen auch virtuell sein kann (KSA), lassen 
+    sich nicht in eindeutiger Weise die Zweigbezeichnung verwendet.
+
+    Allerdings existiert zu jedem (viruellen) Baumzweig in eindeutiger
+    Weise ein (Fundametal)-Schnitt, welcher durch die inneren Knoten
+    eindeutig bestimmt ist. Somit könnten die Knotenspannungen nach den
+    Knoten des jeweiligen Schnittes bezeichnet werden. (Vielleicht zur
+    interenen Bezeichnung sinnvoll, da eindeutig.)
+
+    Oder man verwendet die Von-Nach-Knoten der (virtuellen) Baumzweige als
+    (klassische) Bezeichnung für die Knotenspannungen.
+
 * Cobaum (Nichtbaum):
 
     Ist die Komplementärmenge zum Baum bzgl. des gesamten Netzwerkes.
