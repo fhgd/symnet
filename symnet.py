@@ -194,19 +194,18 @@ class node2(object):
         # selbst zuzugreifen
         self.name = name
 
-        def get_branches(self):
-            pass
-            """
-            _branches = set()
-            for branch in nw.branches:
-                if self in branch.nodes:
-                    _branches.add(branch)
-            return _branches
-            """
-            # Frage: ist wegen nw.branches das Netzwerk eine
-            # Unterklassen von Knoten oder
-            # ist ein Knoten eine Unterklasse vom Netzwerk?
-        self.branches = property(get_branches)
+    def get_branches(self, branches):
+        pass
+        """
+        node_branches = set()
+        for branch in branches:
+            if self in branch.nodes:
+                node_branches.add(branch)
+        return node_branches
+        """
+        # Frage: ist wegen nw.branches das Netzwerk eine
+        # Unterklassen von Knoten oder
+        # ist ein Knoten eine Unterklasse vom Netzwerk?
         # Oder sollte get_branches(node) lieber als Methode des Netzwerks
         # definiert werden?
 
