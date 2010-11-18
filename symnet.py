@@ -43,10 +43,12 @@ Zweigrelation:
       fU = f
       fI = solve(self.U==f, self.I)
 
-    Ganz allgemein: f(alle Netzwerkgrößen)
+    Ganz allgemein: f(alle Netzwerkgrößen, Parameter)
 
-    Verallgemeinerung: mehrere Parameter, mehrere abhängige Steuergrößen,
-        mehrere Definitionsgleichungen (insbesondere fU, fI) verwalten
+    Verallgemeinerung: mehrere Parameter, mehrere Steuergrößen verwalten
+
+    Mehrere Definitionsgleichungen (insbesondere fU, fI) zu verwalten scheint
+    nicht notwendig, da diese als hybrides System modelliert werden können.
 
 * Schnitt:
 
