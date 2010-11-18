@@ -112,6 +112,18 @@ Zweigrelation:
     Frage: Besteht der Nichtbaum nur aus 'echten' Wegen, nämlich Zweigen,
     oder können auch 'Luftwege' wie Knotenspannungen erlaubt sein?
 
+* Knotenspannungsanalyse (KSA):
+
+    Es scheint wohl (theoretisch) einfacher zu werden, wenn die fehlenden
+    Zweige im Netzwerk durch Leerläufe (Stromquellen mit I=0) ergänzt werden.
+    Dann ist nämlich ein Weg immer auch ein Zweig. Die Leerlaufzweige werden
+    dann mit Von-Nach-Knoten bezeichnet.
+
+    Als Bezugsknoten entweder einen beliebigen Netzwerksknoten wählen
+    (zufällig oder Benutzereingabe), oder den mit den meisten 
+    Anschlusszweigen (zu unterschiedlichen Knoten). Dadurch wird die Anzahl
+    der zusätzlichen Leerläufe minimiert.
+
 ToDo:
         Fundamentalmaschen und -schnitte
         modifizierte KSA
