@@ -96,11 +96,14 @@ Zweigrelation:
     Allerdings existiert zu jedem (viruellen) Baumzweig in eindeutiger
     Weise ein (Fundametal)-Schnitt, welcher durch die inneren Knoten
     eindeutig bestimmt ist. Somit könnten die Knotenspannungen nach den
-    Knoten des jeweiligen Schnittes bezeichnet werden. (Vielleicht zur
-    interenen Bezeichnung sinnvoll, da eindeutig.)
+    inneren Knoten des jeweiligen Schnittes bezeichnet werden. (Vielleicht
+    zur internen Bezeichnung sinnvoll, da eindeutig.)
+        Diese Bezeichnung ist möglich, aber sicherlich aufwendiger.
 
     Oder man verwendet die Von-Nach-Knoten der (virtuellen) Baumzweige als
     (klassische) Bezeichnung für die Knotenspannungen.
+        Scheint die bessere Wahl zu sein, weil einfacher und eigentlich
+        auch eindeutig.
 
 * Cobaum (Nichtbaum):
 
