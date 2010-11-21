@@ -3,6 +3,10 @@ from pyparsing import *
 from sympy import *
 
 """
+Literatur:
+
+* Symbolic Circuit Analysis:  http://rodanski.net/ben/work/symbolic/index.htm
+
 Gedanken zur internen Struktur:
 
 
