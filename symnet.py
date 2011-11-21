@@ -151,6 +151,11 @@ Zweigrelation:
     2. Die Nichtbaumzweige dieser Fundamentalmaschen gehören zum
        Fundamentalschnitt.
 
+* Minimale Anzahl unabhaengiger Netzwerkgroessen:
+
+    k-1 unabh. Baumspannungen (wenige Knoten, viele Zweige)
+    z - (k-1) unabh. Nichtbaumstroeme (mehr Baum- als Verbindungszweige)
+
 ToDo:
         modifizierte KSA
         Maschenströme sinnvoll definieren
