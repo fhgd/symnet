@@ -94,7 +94,7 @@ Zweigrelation:
 
 * Bezeichnung der Knotenspannungen (= Baumspannungen):
 
-    Da der Baum der Knotenspannungen auch virtuell sein kann (KSA), lassen 
+    Da der Baum der Knotenspannungen auch virtuell sein kann (KSA), lassen
     sich nicht in eindeutiger Weise die Zweigbezeichnung verwendet.
 
     Allerdings existiert zu jedem (viruellen) Baumzweig in eindeutiger
@@ -124,14 +124,36 @@ Zweigrelation:
     dann mit Von-Nach-Knoten bezeichnet.
 
     Als Bezugsknoten entweder einen beliebigen Netzwerksknoten wählen
-    (zufällig oder Benutzereingabe), oder den mit den meisten 
+    (zufällig oder Benutzereingabe), oder den mit den meisten
     Anschlusszweigen (zu unterschiedlichen Knoten). Dadurch wird die Anzahl
     der zusätzlichen Leerläufe minimiert.
 
+* Fundamentalmasche (eines Nichtbaumzweiges):
+
+    Jedem Nichtbaumzweig ist genau eine Masche zugeordnet. Diese besteht aus
+    dem Nichtbaumzweig und geeigneten Baumzweigen. Diese Baumzweige lassen
+    sich wie folgt finden:
+
+    1. Von der Knotenmenge die zwei Knoten des Nichtbaumzweiges entfernen
+    2. Alle Knoten entfernen, welche nur einen Baumzweig besitzen
+    3. Die übrigen Knoten besitzen alle genau zwei Zweige, welche die
+       Fundamentalmasche des Nichtbaumzweiges bilden.
+
+* Fundamentalschnitt (eines Baumzweiges):
+
+    Bei Entfernung eines Baumzweiges und entsprechender Nichtbaumzweige
+    zerfällt das Netzwerk in zwei seperate Teile, so dass diese Zweige einen
+    Fundamentalschnitt bilden.
+
+    1. Alle Fundamentalmaschen aufsuchen, welche diesen Baumzweig enthalten.
+    2. Die Nichtbaumzweige dieser Fundamentalmaschen gehören zum
+       Fundamentalschnitt.
+
 ToDo:
-        Fundamentalmaschen und -schnitte
         modifizierte KSA
         Maschenströme sinnvoll definieren
+        (Strom der Fundamentalmasche in Richtung des Nichtbaumzweiges?)
+
         Mehrpole
 
 
