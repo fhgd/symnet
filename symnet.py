@@ -82,6 +82,8 @@ Zweigrelation:
     Ist eine Menge *nicht geschlossener Wege* im Netzwerk, die jedoch
     mit *einem* Zweig (vielleicht auch Weg) aus dem Nichtbaum
     geschlossen werden.
+    (Alternativ: Eine Teilmenge von Zweigen, welche alle Knoten verbindet und
+    dabei aber keine Masche bildet heisst Baum.)
 
     Da ein Weg nicht notwendiger Weise ein Zweig sein muss, ist auch
     kein extra virtueller Baum nötig. Jedoch kann der Baum auf die
