@@ -198,6 +198,14 @@ ToDo:
 
 Nutzerinterface:
 
+   +---- R1+ -----+---+
+   |              |   Y
+   +---- Uq -->---+  +|
+         +-           IQ
+                     -|
+                      A         (Verbraucherzählpfeilsystem)
+                      |         (oder Standardorientierung von li-re, ob-un)
+                      +----
 
 * Eingabe:
 
