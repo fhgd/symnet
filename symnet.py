@@ -156,6 +156,38 @@ Zweigrelation:
     k-1 unabh. Baumspannungen (wenige Knoten, viele Zweige)
     z - (k-1) unabh. Nichtbaumstroeme (mehr Baum- als Verbindungszweige)
 
+* Algebra:
+    Aus der Zweigmenge einer Masche oder Schnittes resultiert:
+
+        i1 + i2 + ... ik = 0    bzw.    u1 + u2 + ... uk = 0
+
+    Es sollte auch ohne CAS möglich sein, eine einzelne Zweig-U/I
+    zu berechnen:
+
+        i1 = -i2 + ... - ik     bzw.    u1 = -u2 + ... - uk
+
+    Dies ist notwendig, damit die Ströme und Spannungen der Maschen
+    und Schnitte ersetzt werden können.
+
+    Damit sollten sich auch die Admitanzmatrizen aufstellen lassen.
+    (Evt. alle Funtamentalgleichungen durchnummerieren und als Matrizen
+    aufstellen? 0 = I G U0   mit I=Schnitte, G=Leitwerte, U0=Maschen)
+
+    Damit sollten auch bei lineare NW die Knoten- bzw. Maschengleichung
+    nach den Quellen auflösbar sein:
+
+        IQ = i1 + i2 + ... ik   bzw. UQ = u1 + u2 + ... + uk
+
+    Folglich könnte die etwas aufwändige Trennung der Variablen für das
+    lineare Gleichungssystem (Matrix) entfallen.
+
+    => Folgende Gleichungen zum 'ausrechnen' erzeugen:
+
+        fI1(u1) + fI2(u1-u3) + fI3(u3) = Iq
+        ...
+
+    Matrix (für u1, u3) mit CAS erzeugen
+
 ToDo:
         modifizierte KSA
         Maschenströme sinnvoll definieren
