@@ -186,7 +186,10 @@ Zweigrelation:
         fI1(u1) + fI2(u1-u3) + fI3(u3) = Iq
         ...
 
-    Matrix (für u1, u3) mit CAS erzeugen
+    Matrix (für u1, u3) mit CAS erzeugen.
+
+    Vielleicht wäre es aber besser, die Ersetzungen (u2 = u1-u3) auch dem
+    CAS zu überlassen?!
 
 ToDo:
         modifizierte KSA
