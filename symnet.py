@@ -15,11 +15,25 @@ Gedanken zur internen Struktur:
     # Topologie
     Get-Funktion: Menge der angeschlossenen Zweige
 
+    nodes = {'node_name' : (set(startBranches), set(endBranches))}
+    node_branches = set.union(*nodes[node])     # g.node.branches
+    node_branches_start = nodes[node][0]        # g.node.branches_start
+    node_branches_end   = nodes[node][1]        # g.node.branches_end
+
+    def inverse(mydict):
+        return dict((v, k) for k, vals in mydict.items() for v in vals)
+        # Fehler, wenn ein Knoten nur einen Zweig enthält!
+        # Bei leeren Mengen kein Fehler?!
 
 * Zweig:
 
     # Topologie
     Var: (Von-Knoten, Nach-Knoten)
+
+    branches = {'branch_name' : (from_node, to_node)}
+    branch_nodes = branches[branch]             # g.branch.nodes
+    branch_from_node = branches[branch][0]      # g.branch.node_from
+    branch_to_node = branches[branch][1]        # g.branch.node_to
 
     # Netzwerkgrössen
     Var-Symbol: Zweigspannung, Zweigstrom
@@ -157,6 +171,9 @@ Zweigrelation:
 
     k-1 unabh. Baumspannungen (wenige Knoten, viele Zweige)
     z - (k-1) unabh. Nichtbaumstroeme (mehr Baum- als Verbindungszweige)
+
+    len(nodes) - 1
+    len(branches) - (len(nodes) - 1)
 
 * Algebra:
     Aus der Zweigmenge einer Masche oder Schnittes resultiert:
