@@ -85,6 +85,8 @@ Zweigrelation:
     (Alternativ: Eine Teilmenge von Zweigen, welche alle Knoten verbindet und
     dabei aber keine Masche bildet heisst Baum.)
 
+    <=> Ein Baum hat k-1 Zweige, welche alle Knoten verbinden.
+
     Da ein Weg nicht notwendiger Weise ein Zweig sein muss, ist auch
     kein extra virtueller Baum nötig. Jedoch kann der Baum auf die
     Eigenschaft
@@ -138,7 +140,7 @@ Zweigrelation:
 
     1. Von der Knotenmenge die zwei Knoten des Nichtbaumzweiges entfernen
     2. Alle Knoten entfernen, welche nur einen Baumzweig besitzen
-    3. Die übrigen Knoten besitzen alle genau zwei Zweige, welche die
+    3. Die übrigen Knoten besitzen noch genau zwei (Baum)-Zweige, welche die
        Fundamentalmasche des Nichtbaumzweiges bilden.
 
 * Fundamentalschnitt (eines Baumzweiges):
