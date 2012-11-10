@@ -72,6 +72,8 @@ Zweigrelation:
 
     Menge aus innern Knoten
 
+        cut = set(some nodes)
+
     Menge aus orientierten Zweigen, deren Knoten sowohl
     innerhalb als auch auserhalb des Schnittes liegen
 
@@ -80,11 +82,74 @@ Zweigrelation:
         diejenigen auswählen, welche einen Knoten beitzen, der
         nicht zur Knotenmenge gehört
 
+        cut_branches = set()
+        for node in cut:
+            for branch in nodes[node]:
+                for branch_node in branches[branch]:
+                    if branch_node not in cut:
+                        cut_branches.add(branch)
+
+        ToDo: Schnittzweige orientieren!
+
+
+    Achtung: complement(cut, nodes) ist bis auf das Vorzeiches der
+             gleiche Schnitt!
+
+    Die Definition über die Zweige scheint zweckmäßiger zu sein. (Wegen der
+    Baummethoden und der benötigen Zweigströme eines Schnittes)
+    Dann muss aber auch die Richtung des Schnittes über einen ausgewählten
+    Zweig definiert sein!
+
+    ToDo: Von der Zweigmenge auf die Knotenmenge!
+    zBsp. über Baum, welcher nur einen Zweig der Schnitt-Zweig-Menge enthält.
+    Oder diese Zweigmenge aus dem Netzwerk entfernen und (irgendwie) prüfen,
+    ob es noch zusammenhängend ist (zBsp. irgendeinen Baum suchen).
+
+    Allerdings ist die Aufteilung der Knotenmenge in zwei Teile bei Entfernung
+    eines Baumzweiges sehr einfach und eindeutig. Folglich wäre eine Teilmenge
+    der Knotenmenge eine (bis auf Vorzeichen) eindeutige Eingabe und als Ausgabe
+    könnten die Schnittzweige recht einfach berechnet werden. Wenn man einen
+    Baum zu dieser Schnitt-Knotenmenge kennt, geht es sogar noch schneller,
+    weil nur die Nichtbaumzweige untersucht werden müssten.
 
 * Masche:
 
     Liste von Knoten und Zweigen, die einen *geschlossenen Weg* von
     Knoten zu Knoten über Zweige angeben
+
+        loop = list(connecting branches)
+        is_loop(loop) == True if loop is closed
+
+        def make_loop(branches):
+            "Order the loop branches according to the first branch"
+            Return
+                [(branch1, 0), (branch2, 1), ...]
+            Oder alternativ:
+                   [branch1, branch2, ...], {branch1 : 1, branch2 : -1}
+            Evt.: Knoten-Zweig-Relation selbst aus der branches Menge erstellen
+
+            loop = [(branches[0], 0)}
+            for branch in branches[1:]:
+                last_dir = loop[-1][1]
+                last_node = branches[loop[-1][0]][last_dir]
+                next_branch = [br for br in nodes[last_node] if br in branches]
+                if len(next_branch) == 1:
+                    next_branch = next_branch[0]
+                    next_branch_nodes = branches[next_branch]
+                    if last_node == next_branch_nodes[0]
+                        loop.append((next_branch, 0))
+                    else:
+                        loop.append((next_branch, 1))
+                    # (0, 1) |=> (1, -1) = -2x + 1
+                else:
+                    # No successor branch for to_node found in the branches set
+                    return []
+            last_dir = loop[-1][1]
+            if branches[loop[-1][0]][last_dir] == branches[loop[0][0]][0]
+                return loop
+            else:
+                # Connecting branches are not closed
+                return []
 
     Zweig = Von-Knoten - Nach-Knoten
     Knoten - Zweig = Zweig so orientieren, dass er an Knoten anschließt
