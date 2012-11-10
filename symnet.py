@@ -575,7 +575,7 @@ def get_matrix(eq, syms):
 
     # augmented matrix
     n, m = len(eq), len(syms)
-    matrix = zeronm(n, m+1)
+    matrix = zeros((n, m+1))
 
     index = {}
 
@@ -797,7 +797,7 @@ if __name__ == '__main__':
     VL=Symbol('V_L0')
     VR=Symbol('V_R0')
     result=nw.solve([VL, VR])
-    pprint( Symbol('V_M')==collect(together(result[VL]-result[VR]), Symbol('V1_0')) )
+    pprint( Eq(Symbol('V_M'), collect(together(result[VL]-result[VR]), Symbol('V1_0'))) )
 
 
 
