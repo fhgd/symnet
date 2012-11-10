@@ -101,6 +101,17 @@ Zweigrelation:
 
     <=> Ein Baum hat k-1 Zweige, welche alle Knoten verbinden.
 
+        tree = set(branches)
+        def is_tree(tree):
+            if len(tree) == len(nodes) - 1:
+                tree_nodes = set(branches[branch] for branch in tree)
+                if flatten(tree_nodes) == nodes:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
     Da ein Weg nicht notwendiger Weise ein Zweig sein muss, ist auch
     kein extra virtueller Baum nötig. Jedoch kann der Baum auf die
     Eigenschaft
@@ -134,6 +145,8 @@ Zweigrelation:
     Frage: Besteht der Nichtbaum nur aus 'echten' Wegen, nämlich Zweigen,
     oder können auch 'Luftwege' wie Knotenspannungen erlaubt sein?
 
+        cotree = complement(branches, tree)
+
 * Knotenspannungsanalyse (KSA):
 
     Es scheint wohl (theoretisch) einfacher zu werden, wenn die fehlenden
@@ -157,6 +170,28 @@ Zweigrelation:
     3. Die übrigen Knoten besitzen noch genau zwei (Baum)-Zweige, welche die
        Fundamentalmasche des Nichtbaumzweiges bilden.
 
+    lbranches = copy(tree)
+    for node in (nodes - branches[cobranch]):
+        # Wenn Schnittmenge der Knotenzweige mit Baumzweigen == 1,
+        # dann ist dies ein freier Baumzweig und wird entfernt.
+        trbranches = [branch for branch in nodes[node] if branch in lbranches]
+        if len(trbranches) == 1:
+            lbranches.remove(trbranches)
+    fdloops = {cobranch1 : lbranches1, cobranch2 : lbranches2, ...}
+
+    loop = make_loop([cobranch] + lbranches)
+
+    Fundamentalmasche suchen würde schneller gehen, wenn der Baum ein eigenes
+    Netzwerk bzw. Graph wäre.
+
+Alternativ: Menge der Fundamentalmaschen-Baumzweige aus den Fundamentalschnitten
+    bestimmen.
+
+    # Fundamentalmasche für 'cobranch'
+    loop = [trb for trb, cutbrunches in fdcuts.items() if cobranch in cutbrunches]
+
+    ToDo: Orientierung der Baumzweige bzgl. cobranch sollte möglich sein.
+
 * Fundamentalschnitt (eines Baumzweiges):
 
     Bei Entfernung eines Baumzweiges und entsprechender Nichtbaumzweige
@@ -166,6 +201,12 @@ Zweigrelation:
     1. Alle Fundamentalmaschen aufsuchen, welche diesen Baumzweig enthalten.
     2. Die Nichtbaumzweige dieser Fundamentalmaschen gehören zum
        Fundamentalschnitt.
+
+    # Fundamentalschnitt für 'trbranch'
+    cutbranches = [cb for cb, lbrnches in fdloops.items() if trbrnch in lbrnches]
+    fdcuts = {trbanch1 : cutbrunches1, ...}
+
+    Allgemeiner (ohne Baum), aber aufwändiger, siehe oben bei 'Schnitt'.
 
 * Minimale Anzahl unabhaengiger Netzwerkgroessen:
 
