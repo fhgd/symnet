@@ -156,11 +156,8 @@ print
 print 'Schnitte:'
 # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
 for tb in tree.branches():
-    #~ print tb, g.loopset2cutset(tb, tree)
-    print tb, g.cutbranches(tb, tree)
-    cutdict = g.cut(tb, tree)
-    print '0 = I_'+tb+'  +  '+'  +  '.join(['%sI_%s' % (prsgn(v), k) for k,v in cutdict.items()])
-    print
+    bpos, bneg = g.cutbranches(tb, tree)
+    print tb, ': 0 = '+' + '.join(['I_'+b for b in bpos])+''.join([' - I_'+b for b in bneg])
 print
 
 """
