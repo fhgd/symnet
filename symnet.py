@@ -97,11 +97,11 @@ class Graph(object):
 
     def neighbors(self, branch, node):
         branches = self.branches(node) - set([branch])
+        node = [node]
         if branches:
-            node = [node]
             return node + [self.neighbors(br, (set(self.nodes(br))-set(node)).pop()) for br in branches]
         else:
-            return [node]
+            return node
 
 def prsgn(sgn, plus=False):
     if sgn > 0:
@@ -120,9 +120,18 @@ g.add_branch('R3', 'A', 'R')
 g.add_branch('R4', 'R', '0')
 g.add_branch('GM', 'L', 'R')
 
+def prime_factors(n):
+    for i in range(2,n):
+        if n % i == 0:
+            return [i] + prime_factors(n / i)
+    return [n]
+
+
+
 tree = g.tree(['R1', 'GM', 'R2'])
 tree.add_branch('X1', 'A', 'B')
 tree.add_branch('X2', 'A', 'C')
+tree.add_branch('X3', 'C', 'D')
 
 #~ tree = g.tree(['R1', 'GM', 'R4'])
 #~ tree = g.tree(['V1', 'R1', 'R4'])
