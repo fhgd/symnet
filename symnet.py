@@ -96,12 +96,17 @@ class Graph(object):
         return cut
 
     def neighbors(self, branch, node):
-        branches = self.branches(node) - set([branch])
-        node = [node]
+        branches = self.branches(node)
+        branches.remove(branch)
         if branches:
-            return node + [self.neighbors(br, (set(self.nodes(br))-set(node)).pop()) for br in branches]
+            result = [node]
+            for br in branches:
+                other_node = set(self.nodes(br))
+                other_node.remove(node)
+                result.extend(self.neighbors(br, other_node.pop()))
+            return result
         else:
-            return node
+            return [node]
 
 def prsgn(sgn, plus=False):
     if sgn > 0:
