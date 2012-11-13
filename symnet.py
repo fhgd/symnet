@@ -106,6 +106,19 @@ class Graph(object):
             result.update(self.neighbors(br, other_node.pop()))
         return result
 
+    def cutbranches(self, tb, tree, exclude_tree_branch=False):
+        bin = set()
+        bout = set()
+        for node in tree.neighbors(tb, tree.node_in[tb]):
+            bin.update(self.branches_in.get(node, set()))
+            bout.update(self.branches_out.get(node, set()))
+        if exclude_tree_branch:
+            bout.remove(tb)
+        bpos = bout - bin
+        bneg = bin - bout
+        return bpos, bneg
+
+
 def prsgn(sgn, plus=False):
     if sgn > 0:
         if plus:
@@ -123,18 +136,10 @@ g.add_branch('R3', 'A', 'R')
 g.add_branch('R4', 'R', '0')
 g.add_branch('GM', 'L', 'R')
 
-def prime_factors(n):
-    for i in range(2,n):
-        if n % i == 0:
-            return [i] + prime_factors(n / i)
-    return [n]
-
-
-
 tree = g.tree(['R1', 'GM', 'R2'])
-tree.add_branch('X1', 'A', 'B')
-tree.add_branch('X2', 'A', 'C')
-tree.add_branch('X3', 'C', 'D')
+#~ tree.add_branch('X1', 'A', 'B')
+#~ tree.add_branch('X2', 'A', 'C')
+#~ tree.add_branch('X3', 'C', 'D')
 
 #~ tree = g.tree(['R1', 'GM', 'R4'])
 #~ tree = g.tree(['V1', 'R1', 'R4'])
@@ -152,8 +157,10 @@ print 'Schnitte:'
 # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
 for tb in tree.branches():
     #~ print tb, g.loopset2cutset(tb, tree)
+    print tb, g.cutbranches(tb, tree)
     cutdict = g.cut(tb, tree)
     print '0 = I_'+tb+'  +  '+'  +  '.join(['%sI_%s' % (prsgn(v), k) for k,v in cutdict.items()])
+    print
 print
 
 """
