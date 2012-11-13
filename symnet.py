@@ -54,7 +54,7 @@ class Graph(object):
                 loop_branches = loop_branches - tree.branches(node)
         return loop_branches
 
-    def cutset(self, tb, tree):
+    def loopset2cutset(self, tb, tree):
         cobranches = self.branches() - tree.branches()
         return set([cb for cb in cobranches if tb in self.loopset(cb, tree)])
 
@@ -90,10 +90,11 @@ class Graph(object):
         for cb in cobranches:
             loop = self.loop(cb, self.loopset(cb, tree))
             if tb in loop:
-                if loop[tb] == '+':
-                    cut[cb] = '-'
-                else:
-                    cut[cb] = '+'
+                cut[cb] = loop[tb]
+                #~ if loop[tb] == '+':
+                    #~ cut[cb] = '-'
+                #~ else:
+                    #~ cut[cb] = '+'
         return cut
 
 g = Graph()
@@ -102,11 +103,11 @@ g.add_branch('R1', 'A', 'L')
 g.add_branch('R2', 'L', '0')
 g.add_branch('R3', 'A', 'R')
 g.add_branch('R4', 'R', '0')
-g.add_branch('RM', 'L', 'R')
+g.add_branch('GM', 'L', 'R')
 
-tree = g.tree(['R1', 'RM', 'R2'])
-tree = g.tree(['R1', 'RM', 'R4'])
-#~ tree = g.tree(['V1', 'R1', 'R4'])
+tree = g.tree(['R1', 'GM', 'R2'])
+tree = g.tree(['R1', 'GM', 'R4'])
+tree = g.tree(['V1', 'R1', 'R4'])
 print 'Maschen der Nichtbaumzweige:'
 for cobranch in g.branches() - tree.branches():
     loopset = g.loopset(cobranch, tree)
@@ -116,10 +117,31 @@ for cobranch in g.branches() - tree.branches():
 print
 print 'Schnitte:'
 for tb in tree.branches():
-    #~ print tb, g.cutset(tb, tree)
+    #~ print tb, g.loopset2cutset(tb, tree)
     cutdict = g.cut(tb, tree)
-    print 'I_'+str(tb)+' =', ' '.join([v+'I_'+str(k) for k,v in cutdict.items()])
+    print '0 = I_'+str(tb)+''.join([' %s I_%s' % (v, str(k)) for k,v in cutdict.items()])
+print
 
+def i2u(brn):
+    type = brn[0]
+    name = brn[1:]
+    if type == 'G':
+        return brn+'*V_'+brn
+    elif type == 'R':
+        return 'G'+name+'*V_'+brn
+    elif type == 'I':
+        return brn
+    else:
+        return 'I_'+brn
+
+print 'Knotengleichungen mit Zweigrelationen:'
+for tb in tree.branches():
+    cutdict = g.cut(tb, tree)
+    eqn = [i2u(tb)]
+    for brn, sgn in cutdict.items():
+        eqn.append(sgn+i2u(brn))
+    print '0 = '+'  +  '.join(eqn)
+print
 """
 Literatur:
 
