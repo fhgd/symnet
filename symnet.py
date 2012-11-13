@@ -95,7 +95,7 @@ class Graph(object):
                 cut[cb] = loop[tb]
         return cut
 
-    def neighbors(self, branch, node):
+    def _neighbors(self, branch, node):
         """Return recursively all nodes connected to branch on the node side"""
         branches = self.branches(node)
         branches.remove(branch)
@@ -103,13 +103,13 @@ class Graph(object):
         for br in branches:
             other_node = set(self.nodes(br))
             other_node.remove(node)
-            result.update(self.neighbors(br, other_node.pop()))
+            result.update(self._neighbors(br, other_node.pop()))
         return result
 
     def cutbranches(self, tb, tree, exclude_tree_branch=False):
         bin = set()
         bout = set()
-        for node in tree.neighbors(tb, tree.node_in[tb]):
+        for node in tree._neighbors(tb, tree.node_in[tb]):
             bin.update(self.branches_in.get(node, set()))
             bout.update(self.branches_out.get(node, set()))
         if exclude_tree_branch:
