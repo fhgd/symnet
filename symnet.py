@@ -96,13 +96,14 @@ class Graph(object):
         return cut
 
     def neighbors(self, branch, node):
+        """Return recursively all nodes connected to branch on the node side"""
         branches = self.branches(node)
         branches.remove(branch)
-        result = [node]
+        result = set([node])
         for br in branches:
             other_node = set(self.nodes(br))
             other_node.remove(node)
-            result.extend(self.neighbors(br, other_node.pop()))
+            result.update(self.neighbors(br, other_node.pop()))
         return result
 
 def prsgn(sgn, plus=False):
