@@ -2,6 +2,124 @@
 from pyparsing import *
 from sympy import *
 
+class Graph(object):
+    def __init__(self, name=''):
+        self.node_in = {}
+        self.node_out = {}
+        self.branches_in = {}
+        self.branches_out = {}
+        self.name = name
+
+    def add_branch(self, branch, n1, n2):
+        self.node_in[branch] = n1
+        self.node_out[branch] = n2
+
+        if n2 not in self.branches_in:
+            self.branches_in[n2] = set()
+        if n1 not in self.branches_out:
+            self.branches_out[n1] = set()
+
+        self.branches_in[n2].update([branch])
+        self.branches_out[n1].update([branch])
+
+    def nodes(self, branch=None):
+        if branch:
+            return self.node_in[branch], self.node_out[branch]
+        else:
+            return set(self.branches_in) | set(self.branches_out)
+
+    def branches(self, node=None):
+        if node:
+            return self.branches_in.get(node, set()) | self.branches_out.get(node, set())
+        else:
+            return set(self.node_in) | set(self.node_out)
+
+    def tree(self, branches):
+        if len(branches) == len(self.nodes()) - 1:
+            tree = Graph()
+            for branch in branches:
+                tree.add_branch(branch, *self.nodes(branch))
+            if tree.nodes() == self.nodes():
+                return tree
+            else:
+                return 'Tree does not contain all nodes'
+        else:
+            return 'Tree does not contain %i - 1 branches.' % len(self.nodes())
+
+    def loopset(self, cobranch, tree):
+        loop_branches = tree.branches()
+        tree_nodes = tree.nodes() - set(self.nodes(cobranch))
+        for node in tree_nodes:
+            if len(tree.branches(node)) == 1:
+                loop_branches = loop_branches - tree.branches(node)
+        return loop_branches
+
+    def cutset(self, tb, tree):
+        cobranches = self.branches() - tree.branches()
+        return set([cb for cb in cobranches if tb in self.loopset(cb, tree)])
+
+    def loop(self, cobranch, branchset):
+        loop = dict()
+        # from collections import OrderedDict
+        last_node = self.node_in[cobranch]
+        while branchset:
+            next_branch = self.branches_out.get(last_node, set()) & branchset
+            if next_branch:
+                next_branch = next_branch.pop()
+                loop[next_branch] = '+'
+                last_node = self.node_out[next_branch]
+            else:
+                next_branch = self.branches_in.get(last_node, set()) & branchset
+                if next_branch:
+                    next_branch = next_branch.pop()
+                    loop[next_branch] = '-'
+                    last_node = self.node_in[next_branch]
+                else:
+                    print 'No successor branch for %s found in branchset.' % str(last_node)
+                    return loop
+            branchset.remove(next_branch)
+        if last_node == self.node_out[cobranch]:
+            return loop
+        else:
+            print 'Connecting branches are not closed'
+            return loop
+
+    def cut(self, tb, tree):
+        cut = dict()
+        cobranches = self.branches() - tree.branches()
+        for cb in cobranches:
+            loop = self.loop(cb, self.loopset(cb, tree))
+            if tb in loop:
+                if loop[tb] == '+':
+                    cut[cb] = '-'
+                else:
+                    cut[cb] = '+'
+        return cut
+
+g = Graph()
+g.add_branch('V1', 'A', '0')
+g.add_branch('R1', 'A', 'L')
+g.add_branch('R2', 'L', '0')
+g.add_branch('R3', 'A', 'R')
+g.add_branch('R4', 'R', '0')
+g.add_branch('RM', 'L', 'R')
+
+tree = g.tree(['R1', 'RM', 'R2'])
+tree = g.tree(['R1', 'RM', 'R4'])
+#~ tree = g.tree(['V1', 'R1', 'R4'])
+print 'Maschen der Nichtbaumzweige:'
+for cobranch in g.branches() - tree.branches():
+    loopset = g.loopset(cobranch, tree)
+    #~ print cobranch, loopset
+    loopdict = g.loop(cobranch, loopset)
+    print 'V_'+str(cobranch)+' =', ' '.join([v+'V_'+str(k) for k,v in loopdict.items()])
+print
+print 'Schnitte:'
+for tb in tree.branches():
+    #~ print tb, g.cutset(tb, tree)
+    cutdict = g.cut(tb, tree)
+    print 'I_'+str(tb)+' =', ' '.join([v+'I_'+str(k) for k,v in cutdict.items()])
+
 """
 Literatur:
 
@@ -757,7 +875,8 @@ class network:
             result[v] = collect(together((det_var[v] / det).expand()), self.var_source)
         return result
 
-if __name__ == '__main__':
+#~ if __name__ == '__main__':
+if False:
     nw = network()
     #nw.parseNetlist("par.cir")
     nw.parseNetlist("bridge.cir")
