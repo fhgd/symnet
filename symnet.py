@@ -66,13 +66,13 @@ class Graph(object):
             next_branch = self.branches_out.get(last_node, set()) & branchset
             if next_branch:
                 next_branch = next_branch.pop()
-                loop[next_branch] = '+'
+                loop[next_branch] = 1
                 last_node = self.node_out[next_branch]
             else:
                 next_branch = self.branches_in.get(last_node, set()) & branchset
                 if next_branch:
                     next_branch = next_branch.pop()
-                    loop[next_branch] = '-'
+                    loop[next_branch] = -1
                     last_node = self.node_in[next_branch]
                 else:
                     print 'No successor branch for %s found in branchset.' % str(last_node)
@@ -91,11 +91,13 @@ class Graph(object):
             loop = self.loop(cb, self.loopset(cb, tree))
             if tb in loop:
                 cut[cb] = loop[tb]
-                #~ if loop[tb] == '+':
-                    #~ cut[cb] = '-'
-                #~ else:
-                    #~ cut[cb] = '+'
         return cut
+
+def prsgn(sgn):
+    if sgn > 0:
+        return ''
+    else:
+        return '-'
 
 g = Graph()
 g.add_branch('V1', 'A', '0')
@@ -113,13 +115,13 @@ for cobranch in g.branches() - tree.branches():
     loopset = g.loopset(cobranch, tree)
     #~ print cobranch, loopset
     loopdict = g.loop(cobranch, loopset)
-    print 'V_'+str(cobranch)+' =', ' '.join([v+'V_'+str(k) for k,v in loopdict.items()])
+    print 'V_'+str(cobranch)+' =', '  +  '.join([prsgn(v)+'V_'+k for k,v in loopdict.items()])
 print
 print 'Schnitte:'
 for tb in tree.branches():
     #~ print tb, g.loopset2cutset(tb, tree)
     cutdict = g.cut(tb, tree)
-    print '0 = I_'+str(tb)+''.join([' %s I_%s' % (v, str(k)) for k,v in cutdict.items()])
+    print '0 = I_'+tb+'  +  '+'  +  '.join(['%sI_%s' % (prsgn(v), k) for k,v in cutdict.items()])
 print
 
 def i2u(brn):
@@ -139,9 +141,26 @@ for tb in tree.branches():
     cutdict = g.cut(tb, tree)
     eqn = [i2u(tb)]
     for brn, sgn in cutdict.items():
-        eqn.append(sgn+i2u(brn))
+        eqn.append(prsgn(sgn)+i2u(brn))
     print '0 = '+'  +  '.join(eqn)
 print
+
+print 'Knotengleichungen mit Zweigrelationen und Baumspannungen:'
+adm = {}
+for tb in tree.branches():
+    if tb[0] != 'V':
+        cutdict = g.cut(tb, tree)
+        adm[tb] = {'V_'+tb : {tb : 1}}
+        for cb, sgn in cutdict.items():
+            loopset = g.loopset(cb, tree)
+            loopdict = g.loop(cb, loopset)
+            for b, bsgn in loopdict.items():
+                line = adm[tb].get('V_'+b, {})
+                line[cb] = sgn*bsgn
+                adm[tb]['V_'+b] = line
+adm
+print
+
 """
 Literatur:
 
