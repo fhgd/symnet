@@ -58,6 +58,8 @@ class Graph(object):
         cobranches = self.branches() - tree.branches()
         return set([cb for cb in cobranches if tb in self.loopset(cb, tree)])
 
+
+
     def loop(self, cobranch, branchset):
         loop = dict()
         # from collections import OrderedDict
@@ -93,6 +95,14 @@ class Graph(object):
                 cut[cb] = loop[tb]
         return cut
 
+    def neighbors(self, branch, node):
+        branches = self.branches(node) - set([branch])
+        if branches:
+            node = [node]
+            return node + [self.neighbors(br, (set(self.nodes(br))-set(node)).pop()) for br in branches]
+        else:
+            return [node]
+
 def prsgn(sgn, plus=False):
     if sgn > 0:
         if plus:
@@ -111,8 +121,13 @@ g.add_branch('R4', 'R', '0')
 g.add_branch('GM', 'L', 'R')
 
 tree = g.tree(['R1', 'GM', 'R2'])
-tree = g.tree(['R1', 'GM', 'R4'])
-tree = g.tree(['V1', 'R1', 'R4'])
+tree.add_branch('X1', 'A', 'B')
+tree.add_branch('X2', 'A', 'C')
+
+#~ tree = g.tree(['R1', 'GM', 'R4'])
+#~ tree = g.tree(['V1', 'R1', 'R4'])
+
+
 print 'Maschen der Nichtbaumzweige:'
 for cobranch in g.branches() - tree.branches():
     loopset = g.loopset(cobranch, tree)
@@ -120,12 +135,23 @@ for cobranch in g.branches() - tree.branches():
     loopdict = g.loop(cobranch, loopset)
     print 'V_'+str(cobranch)+' =', '  +  '.join([prsgn(v)+'V_'+k for k,v in loopdict.items()])
 print
+
 print 'Schnitte:'
+# ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
 for tb in tree.branches():
     #~ print tb, g.loopset2cutset(tb, tree)
     cutdict = g.cut(tb, tree)
     print '0 = I_'+tb+'  +  '+'  +  '.join(['%sI_%s' % (prsgn(v), k) for k,v in cutdict.items()])
 print
+
+"""
+Ab hier scheint wohl ein CAS sinnvoll zu sein:
+    * Alle Schnittgleichungen ins CAS
+    * Darin alle Zweigrelationen einsetzen (könnten nichtlinear sein!)
+    * Jetzt alle  Maschengleichungen einsetzen
+    * Wenn möglich, Terme mit Spannungsquellen auf rechte Seite
+Die verbleibenden Gleichungen mitführen.
+"""
 
 def i2u(brn):
     type = brn[0]
