@@ -93,9 +93,12 @@ class Graph(object):
                 cut[cb] = loop[tb]
         return cut
 
-def prsgn(sgn):
+def prsgn(sgn, plus=False):
     if sgn > 0:
-        return ''
+        if plus:
+            return '+'
+        else:
+            return ''
     else:
         return '-'
 
@@ -145,22 +148,38 @@ for tb in tree.branches():
     print '0 = '+'  +  '.join(eqn)
 print
 
+
+def iu(brn):
+    type = brn[0]
+    name = brn[1:]
+    if type == 'G':
+        return brn
+    elif type == 'R':
+        return 'G'+name
+    else:
+        return 'I_'+brn
+
 print 'Knotengleichungen mit Zweigrelationen und Baumspannungen:'
 adm = {}
-for tb in tree.branches():
-    if tb[0] != 'V':
-        cutdict = g.cut(tb, tree)
-        adm[tb] = {'V_'+tb : {tb : 1}}
+for cutbr in tree.branches():
+    if cutbr[0] != 'V':
+        cutdict = g.cut(cutbr, tree)
+        adm[cutbr] = {cutbr : {cutbr : 1}}
         for cb, sgn in cutdict.items():
             loopset = g.loopset(cb, tree)
             loopdict = g.loop(cb, loopset)
-            for b, bsgn in loopdict.items():
-                line = adm[tb].get('V_'+b, {})
-                line[cb] = sgn*bsgn
-                adm[tb]['V_'+b] = line
-adm
-print
+            for trvlt, trsgn in loopdict.items():
+                line = adm[cutbr].get(trvlt, {})
+                line[cb] = sgn*trsgn
+                adm[cutbr][trvlt] = line
 
+for cutbr, trvlts in adm.items():
+    currents = []
+    for trvlt, ads in trvlts.items():
+        admitanzen = [prsgn(sgn, True)+iu(ad) for ad, sgn in ads.items()]
+        currents.append('(' + ''.join(admitanzen) + ')V_'+trvlt)
+    print ' + '.join(currents) + ' = 0'
+print
 """
 Literatur:
 
