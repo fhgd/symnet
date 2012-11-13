@@ -98,15 +98,12 @@ class Graph(object):
     def neighbors(self, branch, node):
         branches = self.branches(node)
         branches.remove(branch)
-        if branches:
-            result = [node]
-            for br in branches:
-                other_node = set(self.nodes(br))
-                other_node.remove(node)
-                result.extend(self.neighbors(br, other_node.pop()))
-            return result
-        else:
-            return [node]
+        result = [node]
+        for br in branches:
+            other_node = set(self.nodes(br))
+            other_node.remove(node)
+            result.extend(self.neighbors(br, other_node.pop()))
+        return result
 
 def prsgn(sgn, plus=False):
     if sgn > 0:
