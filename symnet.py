@@ -118,6 +118,18 @@ class Graph(object):
         bneg = bin - bout
         return bpos, bneg
 
+    def loopbranches(self, cb, tree, exclude_cobranch=True):
+        lpos = set()
+        lneg = set()
+        for tb in tree.branches():
+            bpos, bneg = self.cutbranches(tb, tree)
+            if cb in bpos:
+                lpos.add(tb)
+            if cb in bneg:
+                lneg.add(tb)
+        if not exclude_cobranch:
+            lneg.add(cb)
+        return lpos, lneg
 
 def prsgn(sgn, plus=False):
     if sgn > 0:
@@ -148,9 +160,10 @@ tree = g.tree(['R1', 'GM', 'R2'])
 print 'Maschen der Nichtbaumzweige:'
 for cobranch in g.branches() - tree.branches():
     loopset = g.loopset(cobranch, tree)
-    #~ print cobranch, loopset
+    print cobranch, g.loopbranches(cobranch, tree)
     loopdict = g.loop(cobranch, loopset)
     print 'V_'+str(cobranch)+' =', '  +  '.join([prsgn(v)+'V_'+k for k,v in loopdict.items()])
+    print
 print
 
 print 'Schnitte:'
