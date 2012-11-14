@@ -16,11 +16,11 @@ class Graph(object):
 
         if n2 not in self.branches_in:
             self.branches_in[n2] = set()
+        self.branches_in[n2].add(branch)
+
         if n1 not in self.branches_out:
             self.branches_out[n1] = set()
-
-        self.branches_in[n2].update([branch])
-        self.branches_out[n1].update([branch])
+        self.branches_out[n1].add(branch)
 
     def nodes(self, branch=None):
         if branch:
