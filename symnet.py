@@ -169,16 +169,6 @@ for tb in tree.branches():
     print tb, ': 0 = '+' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg])
 print
 
-def iu(brn):
-    type = brn[0]
-    name = brn[1:]
-    if type == 'G':
-        return brn
-    elif type == 'R':
-        return 'G'+name
-    else:
-        return 'I_'+brn
-
 """
 Literatur:
 
