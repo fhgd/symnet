@@ -163,7 +163,7 @@ for cobranch in g.branches() - tree.branches():
     print 'V_'+cobranch+' = '+' + '.join(['V_'+b for b in lpos])+''.join([' - V_'+b for b in lneg])
 print
 
-print 'Schnitte:'
+print 'Schnitte der Baumzweige:'
 # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
 for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
@@ -179,27 +179,44 @@ Ab hier scheint wohl ein CAS sinnvoll zu sein:
 Die verbleibenden Gleichungen mitführen.
 """
 
-def i2u(brn):
+def f_i(brn, tree=None):
     type = brn[0]
     name = brn[1:]
     if type == 'G':
-        return brn+'*V_'+brn
+        if tree and (brn not in tree.branches()):
+            lpos, lneg = g.loopbranches(brn, tree)
+            #~ print lpos, lneg
+            vbrn = ' + '.join(['V_'+b for b in lpos])+''.join([' - V_'+b for b in lneg])
+            return brn + '*(' + vbrn + ')'
+        else:
+            return brn+'*V_'+brn
     elif type == 'R':
-        return 'G'+name+'*V_'+brn
+        if tree and (brn not in tree.branches()):
+            lpos, lneg = g.loopbranches(brn, tree)
+            vbrn = ' + '.join(['V_'+b for b in lpos]) + ''.join([' - V_'+b for b in lneg])
+            return 'G' + name + '*(' + vbrn + ')'
+        else:
+            return 'G'+name+'*V_'+brn
     elif type == 'I':
         return brn
     else:
         return 'I_'+brn
 
-print 'Knotengleichungen mit Zweigrelationen:'
+print 'Schnittgleichungen mit Zweigrelationen:'
 for tb in tree.branches():
-    cutdict = g.cut(tb, tree)
-    eqn = [i2u(tb)]
-    for brn, sgn in cutdict.items():
-        eqn.append(prsgn(sgn)+i2u(brn))
-    print '0 = '+'  +  '.join(eqn)
+    bpos, bneg = g.cutbranches(tb, tree)
+    cpos = [f_i(b) for b in bpos]
+    cneg = [f_i(b) for b in bneg]
+    print tb, ': 0 = '+' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg])
 print
 
+print 'Schnittgleichungen mit Baumspannungen:'
+for tb in tree.branches():
+    bpos, bneg = g.cutbranches(tb, tree)
+    cpos = [f_i(b, tree) for b in bpos]
+    cneg = [f_i(b, tree) for b in bneg]
+    print tb, ': 0 = '+' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg])
+print
 
 def iu(brn):
     type = brn[0]
