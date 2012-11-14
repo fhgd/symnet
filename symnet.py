@@ -114,7 +114,9 @@ print 'Schnitte der Baumzweige:'
 # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
 for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
-    print tb, ':', ' + '.join(['I_'+b for b in bpos])+''.join([' - I_'+b for b in bneg]), '= 0'
+    lhs_pos = ' + '.join(['I_'+b for b in bpos])
+    lhs_neg = ''.join([' - I_'+b for b in bneg])
+    print tb, ':', lhs_pos+lhs_neg, '= 0'
 print
 
 """
@@ -154,7 +156,9 @@ for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
     cpos = [f_i(b) for b in bpos]
     cneg = [f_i(b) for b in bneg]
-    print tb, ':', ' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg]), '= 0'
+    lhs_pos = ' + '.join([c for c in cpos])
+    lhs_neg = ''.join([' - '+c for c in cneg])
+    print tb, ':', lhs_pos+lhs_neg, '= 0'
 print
 
 print 'Schnittgleichungen mit Baumspannungen:'
@@ -162,7 +166,9 @@ for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
     cpos = [f_i(b, tree) for b in bpos]
     cneg = [f_i(b, tree) for b in bneg]
-    print tb, ':', ' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg]), '= 0'
+    lhs_pos = ' + '.join([c for c in cpos])
+    lhs_neg = ''.join([' - '+c for c in cneg])
+    print tb, ':', lhs_pos+lhs_neg, '= 0'
 print
 
 """
