@@ -46,55 +46,6 @@ class Graph(object):
         else:
             return 'Tree does not contain %i - 1 branches.' % len(self.nodes())
 
-    def loopset(self, cobranch, tree):
-        loop_branches = tree.branches()
-        tree_nodes = tree.nodes() - set(self.nodes(cobranch))
-        for node in tree_nodes:
-            if len(tree.branches(node)) == 1:
-                loop_branches = loop_branches - tree.branches(node)
-        return loop_branches
-
-    def loopset2cutset(self, tb, tree):
-        cobranches = self.branches() - tree.branches()
-        return set([cb for cb in cobranches if tb in self.loopset(cb, tree)])
-
-
-
-    def loop(self, cobranch, branchset):
-        loop = dict()
-        # from collections import OrderedDict
-        last_node = self.node_in[cobranch]
-        while branchset:
-            next_branch = self.branches_out.get(last_node, set()) & branchset
-            if next_branch:
-                next_branch = next_branch.pop()
-                loop[next_branch] = 1
-                last_node = self.node_out[next_branch]
-            else:
-                next_branch = self.branches_in.get(last_node, set()) & branchset
-                if next_branch:
-                    next_branch = next_branch.pop()
-                    loop[next_branch] = -1
-                    last_node = self.node_in[next_branch]
-                else:
-                    print 'No successor branch for %s found in branchset.' % str(last_node)
-                    return loop
-            branchset.remove(next_branch)
-        if last_node == self.node_out[cobranch]:
-            return loop
-        else:
-            print 'Connecting branches are not closed'
-            return loop
-
-    def cut(self, tb, tree):
-        cut = dict()
-        cobranches = self.branches() - tree.branches()
-        for cb in cobranches:
-            loop = self.loop(cb, self.loopset(cb, tree))
-            if tb in loop:
-                cut[cb] = loop[tb]
-        return cut
-
     def _neighbors(self, branch, node):
         """Return recursively all nodes connected to branch on the node side"""
         branches = self.branches(node)
@@ -228,27 +179,6 @@ def iu(brn):
     else:
         return 'I_'+brn
 
-print 'Knotengleichungen mit Zweigrelationen und Baumspannungen:'
-adm = {}
-for cutbr in tree.branches():
-    if cutbr[0] != 'V':
-        cutdict = g.cut(cutbr, tree)
-        adm[cutbr] = {cutbr : {cutbr : 1}}
-        for cb, sgn in cutdict.items():
-            loopset = g.loopset(cb, tree)
-            loopdict = g.loop(cb, loopset)
-            for trvlt, trsgn in loopdict.items():
-                line = adm[cutbr].get(trvlt, {})
-                line[cb] = sgn*trsgn
-                adm[cutbr][trvlt] = line
-
-for cutbr, trvlts in adm.items():
-    currents = []
-    for trvlt, ads in trvlts.items():
-        admitanzen = [prsgn(sgn, True)+iu(ad) for ad, sgn in ads.items()]
-        currents.append('(' + ''.join(admitanzen) + ')V_'+trvlt)
-    print ' + '.join(currents) + ' = 0'
-print
 """
 Literatur:
 
