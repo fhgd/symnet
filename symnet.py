@@ -97,15 +97,11 @@ g.add_branch('R1', 'A', 'L')
 g.add_branch('R2', 'L', '0')
 g.add_branch('R3', 'A', 'R')
 g.add_branch('R4', 'R', '0')
-g.add_branch('GM', 'L', 'R')
+g.add_branch('Iq', 'L', 'R')
 
-tree = g.tree(['R1', 'GM', 'R2'])
-#~ tree.add_branch('X1', 'A', 'B')
-#~ tree.add_branch('X2', 'A', 'C')
-#~ tree.add_branch('X3', 'C', 'D')
-
-#~ tree = g.tree(['R1', 'GM', 'R4'])
-#~ tree = g.tree(['V1', 'R1', 'R4'])
+tree = g.tree(['R1', 'Iq', 'R2'])
+#~ tree = g.tree(['R1', 'Iq', 'R4'])
+tree = g.tree(['V1', 'R1', 'R4'])
 
 
 print 'Maschen der Nichtbaumzweige:'
@@ -118,7 +114,7 @@ print 'Schnitte der Baumzweige:'
 # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
 for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
-    print tb, ': 0 = '+' + '.join(['I_'+b for b in bpos])+''.join([' - I_'+b for b in bneg])
+    print tb, ':', ' + '.join(['I_'+b for b in bpos])+''.join([' - I_'+b for b in bneg]), '= 0'
 print
 
 """
@@ -158,7 +154,7 @@ for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
     cpos = [f_i(b) for b in bpos]
     cneg = [f_i(b) for b in bneg]
-    print tb, ': 0 = '+' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg])
+    print tb, ':', ' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg]), '= 0'
 print
 
 print 'Schnittgleichungen mit Baumspannungen:'
@@ -166,7 +162,7 @@ for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
     cpos = [f_i(b, tree) for b in bpos]
     cneg = [f_i(b, tree) for b in bneg]
-    print tb, ': 0 = '+' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg])
+    print tb, ':', ' + '.join([c for c in cpos])+''.join([' - '+c for c in cneg]), '= 0'
 print
 
 """
