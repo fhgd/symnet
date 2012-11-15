@@ -128,26 +128,15 @@ Ab hier scheint wohl ein CAS sinnvoll zu sein:
 Die verbleibenden Gleichungen mitführen.
 """
 
-def f_i(brn, tree=None):
+def f_i(brn):
     type = brn[0]
     name = brn[1:]
     if type == 'G':
-        if tree and (brn not in tree.branches()):
-            lpos, lneg = g.loopbranches(brn, tree)
-            #~ print lpos, lneg
-            vbrn = ' + '.join(['V_'+b for b in lpos])+''.join([' - V_'+b for b in lneg])
-            return brn + '*(' + vbrn + ')'
-        else:
-            return brn+'*V_'+brn
+        return brn+'*V_'+brn
     elif type == 'R':
-        if tree and (brn not in tree.branches()):
-            lpos, lneg = g.loopbranches(brn, tree)
-            vbrn = ' + '.join(['V_'+b for b in lpos]) + ''.join([' - V_'+b for b in lneg])
-            return 'G' + name + '*(' + vbrn + ')'
-        else:
-            return 'G'+name+'*V_'+brn
-    elif type == 'I':
-        return brn
+        return 'G'+name+'*V_'+brn
+    #~ elif type == 'I':
+        #~ return brn
     else:
         return 'I_'+brn
 
@@ -159,12 +148,26 @@ for tb in tree.branches():
     print tb, ':', lhs_pos+lhs_neg, '= 0'
 print
 
+import sympycore as spc
+
 print 'Schnittgleichungen mit Baumspannungen:'
+tvolts = {}
+for cobranch in g.branches() - tree.branches():
+    lpos, lneg = g.loopbranches(cobranch, tree)
+    rhs_pos = ' + '.join(['V_'+b for b in lpos])
+    rhs_neg = ''.join([' - V_'+b for b in lneg])
+    tvolts[spc.Calculus('V_'+cobranch)] = spc.Calculus(rhs_pos+rhs_neg)
 for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
-    lhs_pos = ' + '.join([f_i(b, tree) for b in bpos])
-    lhs_neg = ''.join([' - '+f_i(b, tree) for b in bneg])
-    print tb, ':', lhs_pos+lhs_neg, '= 0'
+    lhs_pos = ' + '.join([f_i(b) for b in bpos])
+    lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
+    lhs = spc.Calculus(lhs_pos+lhs_neg)
+    lhs = lhs.subs(tvolts)
+    lhs = lhs.expand()
+    # Quellen V_V* und I_I* auf rechte Seite
+    # Extra Machengleichung
+    # Nach den unabhängigen Variablen zusammenfassen
+    print tb, ':', lhs, '= 0'
 print
 
 """
