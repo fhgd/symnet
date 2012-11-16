@@ -148,7 +148,7 @@ for tb in tree.branches():
     print tb, ':', lhs_pos+lhs_neg, '= 0'
 print
 
-import sympycore as spc
+from sympycore import Calculus
 
 print 'Schnittgleichungen mit Baumspannungen:'
 tvolts = {}
@@ -156,12 +156,12 @@ for cobranch in g.branches() - tree.branches():
     lpos, lneg = g.loopbranches(cobranch, tree)
     rhs_pos = ' + '.join(['V_'+b for b in lpos])
     rhs_neg = ''.join([' - V_'+b for b in lneg])
-    tvolts[spc.Calculus('V_'+cobranch)] = spc.Calculus(rhs_pos+rhs_neg)
+    tvolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
 for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
     lhs_pos = ' + '.join([f_i(b) for b in bpos])
     lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
-    lhs = spc.Calculus(lhs_pos+lhs_neg)
+    lhs = Calculus(lhs_pos+lhs_neg)
     lhs = lhs.subs(tvolts)
     lhs = lhs.expand()
     # Quellen V_V* und I_I* auf rechte Seite
