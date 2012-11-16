@@ -1,5 +1,7 @@
 # This Python file uses the following encoding: utf-8
 
+from sympycore import Calculus
+
 class Graph(object):
     def __init__(self, name=''):
         self.node_in = {}
@@ -82,96 +84,93 @@ class Graph(object):
             lpos.add(cb)
         return lpos, lneg
 
-g = Graph()
-g.add_branch('V1', 'A', '0')
-g.add_branch('R1', 'A', 'L')
-g.add_branch('R2', 'L', '0')
-g.add_branch('R3', 'A', 'R')
-g.add_branch('R4', 'R', '0')
-#~ g.add_branch('Rm', 'L', 'R')
-g.add_branch('Iq', 'L', 'R')
-
-tree = g.tree(['R1', 'Iq', 'R2'])
-#~ tree = g.tree(['R1', 'R2', 'R3'])
-
-#~ tree = g.tree(['R1', 'Iq', 'R4'])
-#~ tree = g.tree(['V1', 'R1', 'R4'])
-
-#~ tree = g.tree(['V1', 'Rm', 'R4'])
-#~ tree = g.tree(['V1', 'R2', 'R4'])
-
-
-
-print 'Maschen der Nichtbaumzweige:'
-for cobranch in g.branches() - tree.branches():
-    lpos, lneg = g.loopbranches(cobranch, tree)
-    # moving (bpos, bneg) from lhs to rhs by negation
-    rhs_pos = ' + '.join(['V_'+b for b in lneg])
-    rhs_neg = ''.join([' - V_'+b for b in lpos])
-    print 'V_'+cobranch, '=', rhs_pos+rhs_neg
-print
-
-print 'Schnitte der Baumzweige:'
-# ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
-for tb in tree.branches():
-    bpos, bneg = g.cutbranches(tb, tree)
-    lhs_pos = ' + '.join(['I_'+b for b in bpos])
-    lhs_neg = ''.join([' - I_'+b for b in bneg])
-    print tb, ':', lhs_pos+lhs_neg, '= 0'
-print
+def f_u(brn):
+    """Voltage of branch brn"""
+    type = brn[0]
+    name = brn[1:]
+    if type == 'R':
+        return brn+'*I_'+brn
+    elif type == 'G':
+        #~ return 'I_'+brn+'/'+brn
+        return 'R'+name+'*I_'+brn
+    elif type == 'V':
+        return brn
+    else:
+        return 'V_'+brn
 
 def f_i(brn):
+    """Current of branch brn"""
     type = brn[0]
     name = brn[1:]
     if type == 'G':
         return brn+'*V_'+brn
     elif type == 'R':
-        #~ return 'V_'+brn+'/R'+name
+        #~ return 'V_'+brn+'/'+brn
         return 'G'+name+'*V_'+brn
     elif type == 'I':
         return brn
     else:
         return 'I_'+brn
 
-print 'Schnittgleichungen mit Zweigrelationen:'
-for tb in tree.branches():
-    bpos, bneg = g.cutbranches(tb, tree)
-    lhs_pos = ' + '.join([f_i(b) for b in bpos])
-    lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
-    print tb, ':', lhs_pos+lhs_neg, '= 0'
-print
+def cut_analysis(g, tree):
+    """Cut analysis respect to the tree of the network graph g"""
+    covss = {}
+    covolts = {}
+    for cobranch in g.branches() - tree.branches():
+        lpos, lneg = g.loopbranches(cobranch, tree)
+        # moving (bpos, bneg) from lhs to rhs by negation
+        rhs_pos = ' + '.join(['V_'+b for b in lneg])
+        rhs_neg = ''.join(['- V_'+b for b in lpos])
+        if cobranch[0] == 'V':
+            covss[cobranch] = Calculus(rhs_pos+rhs_neg)
+        else:
+            covolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
+    eqs = []
+    vars = []
+    for tb in tree.branches():
+        if tb[0] != 'V':
+            bpos, bneg = g.cutbranches(tb, tree)
+            lhs_pos = ' + '.join([f_i(b) for b in bpos])
+            lhs_neg = ''.join(['- '+f_i(b) for b in bneg])
+            lhs = Calculus(lhs_pos+lhs_neg)
+            lhs = lhs.subs(covolts)
+            lhs = lhs.expand()
+            eqs.append(lhs)
+            vars.append(Calculus('V_'+tb))
+    for cb, val in covss.items():
+        eqs.append(val - Calculus(cb))
+        vars.append(Calculus('I_'+cb))
+    return eqs, vars
 
-from sympycore import Calculus, Matrix
-
-print 'Schnittgleichungen mit Baumspannungen und'
-print 'Maschengleichungen der Nichtbaum-Spannungsquellen:'
-covss = {}
-covolts = {}
-for cobranch in g.branches() - tree.branches():
-    lpos, lneg = g.loopbranches(cobranch, tree)
-    # moving (bpos, bneg) from lhs to rhs by negation
-    rhs_pos = ' + '.join(['V_'+b for b in lneg])
-    rhs_neg = ''.join(['- V_'+b for b in lpos])
-    if cobranch[0] == 'V':
-        covss[cobranch] = Calculus(rhs_pos+rhs_neg)
-    else:
-        covolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
-eqs = []
-vars = []
-for tb in tree.branches():
-    if tb[0] != 'V':
-        bpos, bneg = g.cutbranches(tb, tree)
-        lhs_pos = ' + '.join([f_i(b) for b in bpos])
-        lhs_neg = ''.join(['- '+f_i(b) for b in bneg])
-        lhs = Calculus(lhs_pos+lhs_neg)
-        lhs = lhs.subs(covolts)
-        lhs = lhs.expand()
-        eqs.append(lhs)
-        vars.append(Calculus('V_'+tb))
-
-for cb, val in covss.items():
-    eqs.append(val - Calculus(cb))
-    vars.append(Calculus('I_'+cb))
+def loop_analysis(g, tree):
+    """Loop analysis respect to the tree of the network graph g"""
+    tcss = {}
+    tcur = {}
+    for tb in tree.branches():
+        bpos, bneg = g.cutbranches(tb, tree, include_tree_branch=False)
+        # moving (bpos, bneg) from lhs to rhs by negation
+        rhs_pos = ' + '.join(['I_'+b for b in bneg])
+        rhs_neg = ''.join(['- I_'+b for b in bpos])
+        if tb[0] == 'I':
+            tcss[tb] = Calculus(rhs_pos+rhs_neg)
+        else:
+            tcur[Calculus('I_'+tb)] = Calculus(rhs_pos+rhs_neg)
+    eqs = []
+    vars = []
+    for cobranch in g.branches() - tree.branches():
+        if cobranch[0] != 'I':
+            lpos, lneg = g.loopbranches(cobranch, tree, include_cobranch=True)
+            lhs_pos = ' + '.join([f_u(b) for b in lpos])
+            lhs_neg = ''.join(['- '+f_u(b) for b in lneg])
+            lhs = Calculus(lhs_pos+lhs_neg)
+            lhs = lhs.subs(tcur)
+            lhs = lhs.expand()
+            eqs.append(lhs)
+            vars.append(Calculus('I_'+cobranch))
+    for b, val in tcss.items():
+        eqs.append(val - Calculus(b))
+        vars.append(Calculus('V_'+b))
+    return eqs, vars
 
 def create_matrices(eqs, vars):
     A, b = [], []
@@ -182,65 +181,72 @@ def create_matrices(eqs, vars):
         b.append(-eq.subs(vars_zero))
     return A, b
 
-A, b = create_matrices(eqs, vars)
+if __name__ == '__main__':
+    from sympycore import Matrix
 
-# pretty print of the matrix equation
-eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
-for e, v, r in zip(*eqs_str):
-    print '[%s] [%s]   =  %s' % (e, v, r)
-print
+    g = Graph()
+    g.add_branch('V1', 'A', '0')
+    g.add_branch('R1', 'A', 'L')
+    g.add_branch('R2', 'L', '0')
+    g.add_branch('R3', 'A', 'R')
+    g.add_branch('R4', 'R', '0')
+    #~ g.add_branch('Rm', 'L', 'R')
+    g.add_branch('Iq', 'L', 'R')
+
+    tree = g.tree(['R1', 'Iq', 'R2'])
+    #~ tree = g.tree(['R1', 'R2', 'R3'])
+
+    #~ tree = g.tree(['R1', 'Iq', 'R4'])
+    #~ tree = g.tree(['V1', 'R1', 'R4'])
+
+    #~ tree = g.tree(['V1', 'Rm', 'R4'])
+    #~ tree = g.tree(['V1', 'R2', 'R4'])
+
+    print 'Maschen der Nichtbaumzweige:'
+    for cobranch in g.branches() - tree.branches():
+        lpos, lneg = g.loopbranches(cobranch, tree)
+        # moving (bpos, bneg) from lhs to rhs by negation
+        rhs_pos = ' + '.join(['V_'+b for b in lneg])
+        rhs_neg = ''.join([' - V_'+b for b in lpos])
+        print 'V_'+cobranch, '=', rhs_pos+rhs_neg
+    print
+
+    print 'Schnitte der Baumzweige:'
+    # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
+    for tb in tree.branches():
+        bpos, bneg = g.cutbranches(tb, tree)
+        lhs_pos = ' + '.join(['I_'+b for b in bpos])
+        lhs_neg = ''.join([' - I_'+b for b in bneg])
+        print tb, ':', lhs_pos+lhs_neg, '= 0'
+    print
 
 
-def f_u(brn):
-    type = brn[0]
-    name = brn[1:]
-    if type == 'G':
-        #~ return 'I_'+brn+'/G'+name
-        return 'R'+name+'*I_'+brn
-    elif type == 'R':
-        return brn+'*I_'+brn
-    elif type == 'V':
-        return brn
-    else:
-        return 'V_'+brn
+    print 'Schnittgleichungen mit Zweigrelationen:'
+    for tb in tree.branches():
+        bpos, bneg = g.cutbranches(tb, tree)
+        lhs_pos = ' + '.join([f_i(b) for b in bpos])
+        lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
+        print tb, ':', lhs_pos+lhs_neg, '= 0'
+    print
 
-print 'Maschengleichungen mit CoBaumStrömen und'
-print 'Schnittgleichungen der Baum-Stromquellen:'
-tcss = {}
-tcur = {}
-for tb in tree.branches():
-    bpos, bneg = g.cutbranches(tb, tree, include_tree_branch=False)
-    # moving (bpos, bneg) from lhs to rhs by negation
-    rhs_pos = ' + '.join(['I_'+b for b in bneg])
-    rhs_neg = ''.join(['- I_'+b for b in bpos])
-    if tb[0] == 'I':
-        tcss[tb] = Calculus(rhs_pos+rhs_neg)
-    else:
-        tcur[Calculus('I_'+tb)] = Calculus(rhs_pos+rhs_neg)
+    print 'Schnittgleichungen mit Baumspannungen und'
+    print 'Maschengleichungen der Nichtbaum-Spannungsquellen:'
+    eqs, vars = cut_analysis(g, tree)
+    A, b = create_matrices(eqs, vars)
+    # pretty print of the matrix equation
+    eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
+    for e, v, r in zip(*eqs_str):
+        print '[%s] [%s]   =  %s' % (e, v, r)
+    print
 
-eqs = []
-vars = []
-for cobranch in g.branches() - tree.branches():
-    if cobranch[0] != 'I':
-        lpos, lneg = g.loopbranches(cobranch, tree, include_cobranch=True)
-        lhs_pos = ' + '.join([f_u(b) for b in lpos])
-        lhs_neg = ''.join(['- '+f_u(b) for b in lneg])
-        lhs = Calculus(lhs_pos+lhs_neg)
-        lhs = lhs.subs(tcur)
-        lhs = lhs.expand()
-        eqs.append(lhs)
-        vars.append(Calculus('I_'+cobranch))
-
-for b, val in tcss.items():
-    eqs.append(val - Calculus(b))
-    vars.append(Calculus('V_'+b))
-
-A, b = create_matrices(eqs, vars)
-
-# pretty print of the matrix equation
-eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
-for e, v, r in zip(*eqs_str):
-    print '[%s] [%s]   =  %s' % (e, v, r)
+    print 'Maschengleichungen mit CoBaumStrömen und'
+    print 'Schnittgleichungen der Baum-Stromquellen:'
+    eqs, vars = loop_analysis(g, tree)
+    A, b = create_matrices(eqs, vars)
+    # pretty print of the matrix equation
+    eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
+    for e, v, r in zip(*eqs_str):
+        print '[%s] [%s]   =  %s' % (e, v, r)
 
 """
 Literatur:
