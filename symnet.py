@@ -189,6 +189,22 @@ def create_matrices(eqs, vars):
         b.append(-eq.subs(vars_zero))
     return A, b
 
+"""
+Idee zu den Zweigen:
+    Statt Strings könnten die Zweige auch eigene Objekte sein (Unterklasse
+    von String?), welche die benöigten Informationen bequemer bereitstellen.
+
+        b.name
+        b.type                  # auch durch Klasse erkennbar?!
+        b.i
+        b.u
+        b.f_i
+        b.f_u
+        b.controlled_branch     # für gesteuerte Quellen
+
+    Klasse muss aber *immutable* sein!
+"""
+
 if __name__ == '__main__':
     from sympycore import Matrix
 
@@ -220,7 +236,6 @@ if __name__ == '__main__':
     print
 
     print 'Schnitte der Baumzweige:'
-    # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree)
         lhs_pos = ' + '.join(['I_'+b for b in bpos])
