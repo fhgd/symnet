@@ -4,6 +4,7 @@ from sympycore import Calculus
 
 class Graph(object):
     def __init__(self, name=''):
+        """The graph contain branches between nodes"""
         self.node_in = {}
         self.node_out = {}
         self.branches_in = {}
@@ -11,6 +12,7 @@ class Graph(object):
         self.name = name
 
     def add_branch(self, branch, n1, n2):
+        """Add a new branch to the graph"""
         self.node_in[branch] = n1
         self.node_out[branch] = n2
 
@@ -23,18 +25,21 @@ class Graph(object):
         self.branches_out[n1].add(branch)
 
     def nodes(self, branch=None):
+        """Return the two nodes of branch or all nodes of the graph"""
         if branch:
             return self.node_in[branch], self.node_out[branch]
         else:
             return set(self.branches_in) | set(self.branches_out)
 
     def branches(self, node=None):
+        """Return all connecting branches to node or all branches of the graph"""
         if node:
             return self.branches_in.get(node, set()) | self.branches_out.get(node, set())
         else:
             return set(self.node_in) | set(self.node_out)
 
     def tree(self, branches):
+        """Return the graph of branches if branches are a tree"""
         if len(branches) == len(self.nodes()) - 1:
             tree = Graph()
             for branch in branches:
@@ -42,9 +47,9 @@ class Graph(object):
             if tree.nodes() == self.nodes():
                 return tree
             else:
-                return 'Tree does not contain all nodes'
+                raise Exceptin, 'Tree does not contain all nodes'
         else:
-            return 'Tree does not contain %i - 1 branches.' % len(self.nodes())
+            raise Exception, 'Tree does not contain %i - 1 branches.' % len(self.nodes())
 
     def _neighbors(self, branch, node):
         """Return recursively all nodes connected to branch on the node side"""
@@ -58,6 +63,7 @@ class Graph(object):
         return result
 
     def cut(self, tb, tree, include_tree_branch=True):
+        """Return all branches from the cut with the tree branch tb"""
         bin = set()
         bout = set()
         for node in tree._neighbors(tb, tree.node_in[tb]):
@@ -70,6 +76,7 @@ class Graph(object):
         return bpos, bneg
 
     def loop(self, cb, tree, include_cobranch=False):
+        """Return all branches from the loop through the cobranch cb"""
         lpos = set()
         lneg = set()
         for tb in tree.branches():
@@ -173,6 +180,7 @@ def loop_analysis(g, tree):
     return eqs, vars
 
 def create_matrices(eqs, vars):
+    """Convert the linear equations eqs = 0 into Ax = b with x = vars"""
     A, b = [], []
     vars_zero = dict((var, 0) for var in vars)
     for eq in eqs:
