@@ -57,7 +57,7 @@ class Graph(object):
             result.update(self._neighbors(br, other_node.pop()))
         return result
 
-    def cutbranches(self, tb, tree, include_tree_branch=True):
+    def cut(self, tb, tree, include_tree_branch=True):
         bin = set()
         bout = set()
         for node in tree._neighbors(tb, tree.node_in[tb]):
@@ -69,11 +69,11 @@ class Graph(object):
         bneg = bin - bout
         return bpos, bneg
 
-    def loopbranches(self, cb, tree, include_cobranch=False):
+    def loop(self, cb, tree, include_cobranch=False):
         lpos = set()
         lneg = set()
         for tb in tree.branches():
-            bpos, bneg = self.cutbranches(tb, tree)
+            bpos, bneg = self.cut(tb, tree)
             if cb in bpos:
                 # if branches cb and tb have the same cut direction
                 # then they must have the opposit loop direction
@@ -117,7 +117,7 @@ def cut_analysis(g, tree):
     covss = {}
     covolts = {}
     for cobranch in g.branches() - tree.branches():
-        lpos, lneg = g.loopbranches(cobranch, tree)
+        lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = ' + '.join(['V_'+b for b in lneg])
         rhs_neg = ''.join(['- V_'+b for b in lpos])
@@ -129,7 +129,7 @@ def cut_analysis(g, tree):
     vars = []
     for tb in tree.branches():
         if tb[0] != 'V':
-            bpos, bneg = g.cutbranches(tb, tree)
+            bpos, bneg = g.cut(tb, tree)
             lhs_pos = ' + '.join([f_i(b) for b in bpos])
             lhs_neg = ''.join(['- '+f_i(b) for b in bneg])
             lhs = Calculus(lhs_pos+lhs_neg)
@@ -147,7 +147,7 @@ def loop_analysis(g, tree):
     tcss = {}
     tcur = {}
     for tb in tree.branches():
-        bpos, bneg = g.cutbranches(tb, tree, include_tree_branch=False)
+        bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = ' + '.join(['I_'+b for b in bneg])
         rhs_neg = ''.join(['- I_'+b for b in bpos])
@@ -159,7 +159,7 @@ def loop_analysis(g, tree):
     vars = []
     for cobranch in g.branches() - tree.branches():
         if cobranch[0] != 'I':
-            lpos, lneg = g.loopbranches(cobranch, tree, include_cobranch=True)
+            lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
             lhs_pos = ' + '.join([f_u(b) for b in lpos])
             lhs_neg = ''.join(['- '+f_u(b) for b in lneg])
             lhs = Calculus(lhs_pos+lhs_neg)
@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
     print 'Maschen der Nichtbaumzweige:'
     for cobranch in g.branches() - tree.branches():
-        lpos, lneg = g.loopbranches(cobranch, tree)
+        lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = ' + '.join(['V_'+b for b in lneg])
         rhs_neg = ''.join([' - V_'+b for b in lpos])
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     print 'Schnitte der Baumzweige:'
     # ToDo: Alle Stromquellen auf rechte Seite, Rest bleibt auf linken Seite.
     for tb in tree.branches():
-        bpos, bneg = g.cutbranches(tb, tree)
+        bpos, bneg = g.cut(tb, tree)
         lhs_pos = ' + '.join(['I_'+b for b in bpos])
         lhs_neg = ''.join([' - I_'+b for b in bneg])
         print tb, ':', lhs_pos+lhs_neg, '= 0'
@@ -223,7 +223,7 @@ if __name__ == '__main__':
 
     print 'Schnittgleichungen mit Zweigrelationen:'
     for tb in tree.branches():
-        bpos, bneg = g.cutbranches(tb, tree)
+        bpos, bneg = g.cut(tb, tree)
         lhs_pos = ' + '.join([f_i(b) for b in bpos])
         lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
         print tb, ':', lhs_pos+lhs_neg, '= 0'
