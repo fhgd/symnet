@@ -176,7 +176,7 @@ def create_matrices(eqs, vars):
     for eq in eqs:
         line = [eq.subs(var, 1) - eq.subs(var, 0) for var in vars]
         A.append(line)
-        b.append(eq.subs(vars_zero))
+        b.append(-eq.subs(vars_zero))
     return A, b
 
 A, b = create_matrices(eqs, vars)
