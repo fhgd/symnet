@@ -128,10 +128,10 @@ def cut_analysis(g, tree):
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = ' + '.join(['V_'+b for b in lneg])
         rhs_neg = ''.join(['- V_'+b for b in lpos])
-        if cobranch[0] == 'V':
-            covss[cobranch] = Calculus(rhs_pos+rhs_neg)
-        else:
+        if cobranch[0] != 'V':
             covolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
+        else:
+            covss[cobranch] = Calculus(rhs_pos+rhs_neg)
     eqs = []
     vars = []
     for tb in tree.branches():
@@ -158,10 +158,10 @@ def loop_analysis(g, tree):
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = ' + '.join(['I_'+b for b in bneg])
         rhs_neg = ''.join(['- I_'+b for b in bpos])
-        if tb[0] == 'I':
-            tcss[tb] = Calculus(rhs_pos+rhs_neg)
-        else:
+        if tb[0] != 'I':
             tcur[Calculus('I_'+tb)] = Calculus(rhs_pos+rhs_neg)
+        else:
+            tcss[tb] = Calculus(rhs_pos+rhs_neg)
     eqs = []
     vars = []
     for cobranch in g.branches() - tree.branches():
