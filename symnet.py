@@ -133,6 +133,7 @@ def f_i(brn):
     if type == 'G':
         return brn+'*V_'+brn
     elif type == 'R':
+        #~ return 'V_'+brn+'/R'+name
         return 'G'+name+'*V_'+brn
     elif type == 'I':
         return brn
