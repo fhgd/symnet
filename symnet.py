@@ -159,16 +159,17 @@ for cobranch in g.branches() - tree.branches():
 eqs = []
 vars = []
 for tb in tree.branches():
-    bpos, bneg = g.cutbranches(tb, tree)
-    lhs_pos = ' + '.join([f_i(b) for b in bpos])
-    lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
-    lhs = Calculus(lhs_pos+lhs_neg)
-    lhs = lhs.subs(covolts)
-    lhs = lhs.expand()
-    eqs.append(lhs)
-    vars.append(Calculus('V_'+tb))
-    # Extra Machengleichung
-    # Nach den unabhängigen Variablen zusammenfassen
+    if tb[0] != 'V':
+        bpos, bneg = g.cutbranches(tb, tree)
+        lhs_pos = ' + '.join([f_i(b) for b in bpos])
+        lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
+        lhs = Calculus(lhs_pos+lhs_neg)
+        lhs = lhs.subs(covolts)
+        lhs = lhs.expand()
+        eqs.append(lhs)
+        vars.append(Calculus('V_'+tb))
+        # Extra Machengleichung
+        # Nach den unabhängigen Variablen zusammenfassen
 
 def create_matrices(eqs, vars):
     A, b = [], []
