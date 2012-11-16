@@ -1,6 +1,4 @@
 # This Python file uses the following encoding: utf-8
-from pyparsing import *
-from sympy import *
 
 class Graph(object):
     def __init__(self, name=''):
@@ -82,30 +80,23 @@ class Graph(object):
             lneg.add(cb)
         return lpos, lneg
 
-def prsgn(sgn, plus=False):
-    if sgn > 0:
-        if plus:
-            return '+'
-        else:
-            return ''
-    else:
-        return '-'
-
 g = Graph()
 g.add_branch('V1', 'A', '0')
 g.add_branch('R1', 'A', 'L')
 g.add_branch('R2', 'L', '0')
 g.add_branch('R3', 'A', 'R')
 g.add_branch('R4', 'R', '0')
-g.add_branch('Rm', 'L', 'R')
-#~ g.add_branch('Iq', 'L', 'R')
+#~ g.add_branch('Rm', 'L', 'R')
+g.add_branch('Iq', 'L', 'R')
 
-#~ tree = g.tree(['R1', 'Iq', 'R2'])
+tree = g.tree(['R1', 'Iq', 'R2'])
+#~ tree = g.tree(['R1', 'R2', 'R3'])
+
 #~ tree = g.tree(['R1', 'Iq', 'R4'])
 #~ tree = g.tree(['V1', 'R1', 'R4'])
 
 #~ tree = g.tree(['V1', 'Rm', 'R4'])
-tree = g.tree(['V1', 'R2', 'R4'])
+#~ tree = g.tree(['V1', 'R2', 'R4'])
 
 
 
@@ -123,15 +114,6 @@ for tb in tree.branches():
     lhs_neg = ''.join([' - I_'+b for b in bneg])
     print tb, ':', lhs_pos+lhs_neg, '= 0'
 print
-
-"""
-Ab hier scheint wohl ein CAS sinnvoll zu sein:
-    * Alle Schnittgleichungen ins CAS
-    * Darin alle Zweigrelationen einsetzen (könnten nichtlinear sein!)
-    * Jetzt alle  Maschengleichungen einsetzen
-    * Wenn möglich, Terme mit Spannungsquellen auf rechte Seite
-Die verbleibenden Gleichungen mitführen.
-"""
 
 def f_i(brn):
     type = brn[0]
@@ -193,6 +175,58 @@ def create_matrices(eqs, vars):
         A.append(line)
         b.append(-eq.subs(vars_zero))
     return A, b
+
+A, b = create_matrices(eqs, vars)
+
+# pretty print of the matrix equation
+eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
+for e, v, r in zip(*eqs_str):
+    print '[%s] [%s]   =  %s' % (e, v, r)
+print
+
+
+def f_u(brn):
+    type = brn[0]
+    name = brn[1:]
+    if type == 'G':
+        #~ return 'I_'+brn+'/G'+name
+        return 'R'+name+'*I_'+brn
+    elif type == 'R':
+        return brn+'*I_'+brn
+    elif type == 'V':
+        return brn
+    else:
+        return 'V_'+brn
+
+print 'Maschengleichungen mit CoBaumStrömen und'
+print 'Schnittgleichungen der Baum-Stromquellen:'
+tcss = {}
+tcur = {}
+for tb in tree.branches():
+    bpos, bneg = g.cutbranches(tb, tree, exclude_tree_branch=True)
+    rhs_pos = ' + '.join(['I_'+b for b in bpos])
+    rhs_neg = ''.join([' - I_'+b for b in bneg])
+    if tb[0] == 'I':
+        tcss[tb] = -Calculus(rhs_pos+rhs_neg)
+    else:
+        tcur[Calculus('I_'+tb)] = -Calculus(rhs_pos+rhs_neg)
+
+eqs = []
+vars = []
+for cobranch in g.branches() - tree.branches():
+    if cobranch[0] != 'I':
+        lpos, lneg = g.loopbranches(cobranch, tree, exclude_cobranch=False)
+        lhs_pos = ' + '.join([f_u(b) for b in lpos])
+        lhs_neg = ''.join([' - '+f_u(b) for b in lneg])
+        lhs = -Calculus(lhs_pos+lhs_neg)
+        lhs = lhs.subs(tcur)
+        lhs = lhs.expand()
+        eqs.append(lhs)
+        vars.append(Calculus('I_'+cobranch))
+
+for b, val in tcss.items():
+    eqs.append(val - Calculus(b))
+    vars.append(Calculus('V_'+b))
 
 A, b = create_matrices(eqs, vars)
 
@@ -968,8 +1002,11 @@ class network:
             result[v] = collect(together((det_var[v] / det).expand()), self.var_source)
         return result
 
-if __name__ == '__main__':
-#~ if False:
+#~ if __name__ == '__main__':
+if False:
+    from pyparsing import *
+    from sympy import *
+
     nw = network()
     #nw.parseNetlist("par.cir")
     nw.parseNetlist("bridge.cir")
