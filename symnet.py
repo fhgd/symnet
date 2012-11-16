@@ -100,7 +100,7 @@ g.add_branch('Iq', 'L', 'R')
 
 tree = g.tree(['R1', 'Iq', 'R2'])
 #~ tree = g.tree(['R1', 'Iq', 'R4'])
-tree = g.tree(['V1', 'R1', 'R4'])
+#~ tree = g.tree(['V1', 'R1', 'R4'])
 
 
 print 'Maschen der Nichtbaumzweige:'
@@ -134,8 +134,8 @@ def f_i(brn):
         return brn+'*V_'+brn
     elif type == 'R':
         return 'G'+name+'*V_'+brn
-    #~ elif type == 'I':
-        #~ return brn
+    elif type == 'I':
+        return brn
     else:
         return 'I_'+brn
 
@@ -149,13 +149,18 @@ print
 
 from sympycore import Calculus, Matrix
 
-print 'Schnittgleichungen mit Baumspannungen:'
+print 'Schnittgleichungen mit Baumspannungen und'
+print 'Maschengleichungen der Nichtbaum-Spannungsquellen:'
+covss = {}
 covolts = {}
 for cobranch in g.branches() - tree.branches():
     lpos, lneg = g.loopbranches(cobranch, tree)
     rhs_pos = ' + '.join(['V_'+b for b in lpos])
     rhs_neg = ''.join([' - V_'+b for b in lneg])
-    covolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
+    if cobranch[0] == 'V':
+        covss[cobranch] = Calculus(rhs_pos+rhs_neg)
+    else:
+        covolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
 eqs = []
 vars = []
 for tb in tree.branches():
@@ -168,8 +173,10 @@ for tb in tree.branches():
         lhs = lhs.expand()
         eqs.append(lhs)
         vars.append(Calculus('V_'+tb))
-        # Extra Machengleichung
-        # Nach den unabhängigen Variablen zusammenfassen
+
+for cb, val in covss.items():
+    eqs.append(val - Calculus(cb))
+    vars.append(Calculus('I_'+cb))
 
 def create_matrices(eqs, vars):
     A, b = [], []
@@ -181,9 +188,11 @@ def create_matrices(eqs, vars):
     return A, b
 
 A, b = create_matrices(eqs, vars)
+
+# pretty print of the matrix equation
 eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
 for e, v, r in zip(*eqs_str):
-    print '[%s][%s]  =  %s' % (e, v, r)
+    print '[%s] [%s]   =  %s' % (e, v, r)
 
 """
 Literatur:
