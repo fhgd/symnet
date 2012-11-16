@@ -104,7 +104,8 @@ g.add_branch('Rm', 'L', 'R')
 #~ tree = g.tree(['R1', 'Iq', 'R4'])
 #~ tree = g.tree(['V1', 'R1', 'R4'])
 
-tree = g.tree(['V1', 'Rm', 'R4'])
+#~ tree = g.tree(['V1', 'Rm', 'R4'])
+tree = g.tree(['V1', 'R2', 'R4'])
 
 
 
@@ -946,6 +947,7 @@ class network:
         C = get_matrix(self.equation, self.var_state)
         ## get the lhs matrix (coefficient matrix)
         A=C[:,:-1]
+        print A
         ## get the rhs matrix
         B=C[:,-1]
         self.C = C
@@ -1007,7 +1009,8 @@ if __name__ == '__main__':
     VL=Symbol('V_L0')
     VR=Symbol('V_R0')
     result=nw.solve([VL, VR])
-    pprint( Eq(Symbol('V_M'), collect(together(result[VL]-result[VR]), Symbol('V1_0'))) )
+    #~ pprint( Eq(Symbol('V_M'), collect(together(result[VL]-result[VR]), Symbol('V1_0'))) )
+    pprint( Eq(Symbol('V_L'), collect(together(result[VL]), Symbol('V1_0'))) )
 
 
 
