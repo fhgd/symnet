@@ -145,7 +145,7 @@ covolts = {}
 for cobranch in g.branches() - tree.branches():
     lpos, lneg = g.loopbranches(cobranch, tree)
     rhs_pos = ' + '.join(['V_'+b for b in lpos])
-    rhs_neg = ''.join([' - V_'+b for b in lneg])
+    rhs_neg = ''.join(['- V_'+b for b in lneg])
     if cobranch[0] == 'V':
         covss[cobranch] = Calculus(rhs_pos+rhs_neg)
     else:
@@ -156,7 +156,7 @@ for tb in tree.branches():
     if tb[0] != 'V':
         bpos, bneg = g.cutbranches(tb, tree)
         lhs_pos = ' + '.join([f_i(b) for b in bpos])
-        lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
+        lhs_neg = ''.join(['- '+f_i(b) for b in bneg])
         lhs = Calculus(lhs_pos+lhs_neg)
         lhs = lhs.subs(covolts)
         lhs = lhs.expand()
@@ -205,7 +205,7 @@ tcur = {}
 for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree, exclude_tree_branch=True)
     rhs_pos = ' + '.join(['I_'+b for b in bpos])
-    rhs_neg = ''.join([' - I_'+b for b in bneg])
+    rhs_neg = ''.join(['- I_'+b for b in bneg])
     if tb[0] == 'I':
         tcss[tb] = -Calculus(rhs_pos+rhs_neg)
     else:
@@ -217,7 +217,7 @@ for cobranch in g.branches() - tree.branches():
     if cobranch[0] != 'I':
         lpos, lneg = g.loopbranches(cobranch, tree, exclude_cobranch=False)
         lhs_pos = ' + '.join([f_u(b) for b in lpos])
-        lhs_neg = ''.join([' - '+f_u(b) for b in lneg])
+        lhs_neg = ''.join(['- '+f_u(b) for b in lneg])
         lhs = -Calculus(lhs_pos+lhs_neg)
         lhs = lhs.subs(tcur)
         lhs = lhs.expand()
