@@ -105,7 +105,10 @@ tree = g.tree(['R1', 'Iq', 'R2'])
 print 'Maschen der Nichtbaumzweige:'
 for cobranch in g.branches() - tree.branches():
     lpos, lneg = g.loopbranches(cobranch, tree)
-    print 'V_'+cobranch+' = '+' + '.join(['V_'+b for b in lpos])+''.join([' - V_'+b for b in lneg])
+    # moving (bpos, bneg) from lhs to rhs by negation
+    rhs_pos = ' + '.join(['V_'+b for b in lneg])
+    rhs_neg = ''.join([' - V_'+b for b in lpos])
+    print 'V_'+cobranch, '=', rhs_pos+rhs_neg
 print
 
 print 'Schnitte der Baumzweige:'
