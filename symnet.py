@@ -55,29 +55,31 @@ class Graph(object):
             result.update(self._neighbors(br, other_node.pop()))
         return result
 
-    def cutbranches(self, tb, tree, exclude_tree_branch=False):
+    def cutbranches(self, tb, tree, include_tree_branch=True):
         bin = set()
         bout = set()
         for node in tree._neighbors(tb, tree.node_in[tb]):
             bin.update(self.branches_in.get(node, set()))
             bout.update(self.branches_out.get(node, set()))
-        if exclude_tree_branch:
+        if not include_tree_branch:
             bout.remove(tb)
         bpos = bout - bin
         bneg = bin - bout
         return bpos, bneg
 
-    def loopbranches(self, cb, tree, exclude_cobranch=True):
+    def loopbranches(self, cb, tree, include_cobranch=False):
         lpos = set()
         lneg = set()
         for tb in tree.branches():
             bpos, bneg = self.cutbranches(tb, tree)
             if cb in bpos:
-                lpos.add(tb)
-            if cb in bneg:
+                # if branches cb and tb have the same cut direction
+                # then they must have the opposit loop direction
                 lneg.add(tb)
-        if not exclude_cobranch:
-            lneg.add(cb)
+            if cb in bneg:
+                lpos.add(tb)
+        if include_cobranch:
+            lpos.add(cb)
         return lpos, lneg
 
 g = Graph()
@@ -144,8 +146,9 @@ covss = {}
 covolts = {}
 for cobranch in g.branches() - tree.branches():
     lpos, lneg = g.loopbranches(cobranch, tree)
-    rhs_pos = ' + '.join(['V_'+b for b in lpos])
-    rhs_neg = ''.join(['- V_'+b for b in lneg])
+    # moving (bpos, bneg) from lhs to rhs by negation
+    rhs_pos = ' + '.join(['V_'+b for b in lneg])
+    rhs_neg = ''.join(['- V_'+b for b in lpos])
     if cobranch[0] == 'V':
         covss[cobranch] = Calculus(rhs_pos+rhs_neg)
     else:
@@ -203,22 +206,23 @@ print 'Schnittgleichungen der Baum-Stromquellen:'
 tcss = {}
 tcur = {}
 for tb in tree.branches():
-    bpos, bneg = g.cutbranches(tb, tree, exclude_tree_branch=True)
-    rhs_pos = ' + '.join(['I_'+b for b in bpos])
-    rhs_neg = ''.join(['- I_'+b for b in bneg])
+    bpos, bneg = g.cutbranches(tb, tree, include_tree_branch=False)
+    # moving (bpos, bneg) from lhs to rhs by negation
+    rhs_pos = ' + '.join(['I_'+b for b in bneg])
+    rhs_neg = ''.join(['- I_'+b for b in bpos])
     if tb[0] == 'I':
-        tcss[tb] = -Calculus(rhs_pos+rhs_neg)
+        tcss[tb] = Calculus(rhs_pos+rhs_neg)
     else:
-        tcur[Calculus('I_'+tb)] = -Calculus(rhs_pos+rhs_neg)
+        tcur[Calculus('I_'+tb)] = Calculus(rhs_pos+rhs_neg)
 
 eqs = []
 vars = []
 for cobranch in g.branches() - tree.branches():
     if cobranch[0] != 'I':
-        lpos, lneg = g.loopbranches(cobranch, tree, exclude_cobranch=False)
+        lpos, lneg = g.loopbranches(cobranch, tree, include_cobranch=True)
         lhs_pos = ' + '.join([f_u(b) for b in lpos])
         lhs_neg = ''.join(['- '+f_u(b) for b in lneg])
-        lhs = -Calculus(lhs_pos+lhs_neg)
+        lhs = Calculus(lhs_pos+lhs_neg)
         lhs = lhs.subs(tcur)
         lhs = lhs.expand()
         eqs.append(lhs)
