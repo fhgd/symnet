@@ -1,6 +1,5 @@
 # This Python file uses the following encoding: utf-8
 from pyparsing import *
-from sympy import *
 
 class Graph(object):
     def __init__(self, name=''):
@@ -148,27 +147,42 @@ for tb in tree.branches():
     print tb, ':', lhs_pos+lhs_neg, '= 0'
 print
 
-from sympycore import Calculus
+from sympycore import Calculus, Matrix
 
 print 'Schnittgleichungen mit Baumspannungen:'
-tvolts = {}
+covolts = {}
 for cobranch in g.branches() - tree.branches():
     lpos, lneg = g.loopbranches(cobranch, tree)
     rhs_pos = ' + '.join(['V_'+b for b in lpos])
     rhs_neg = ''.join([' - V_'+b for b in lneg])
-    tvolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
+    covolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
+eqs = []
+vars = []
 for tb in tree.branches():
     bpos, bneg = g.cutbranches(tb, tree)
     lhs_pos = ' + '.join([f_i(b) for b in bpos])
     lhs_neg = ''.join([' - '+f_i(b) for b in bneg])
     lhs = Calculus(lhs_pos+lhs_neg)
-    lhs = lhs.subs(tvolts)
+    lhs = lhs.subs(covolts)
     lhs = lhs.expand()
-    # Quellen V_V* und I_I* auf rechte Seite
+    eqs.append(lhs)
+    vars.append(Calculus('V_'+tb))
     # Extra Machengleichung
     # Nach den unabhängigen Variablen zusammenfassen
-    print tb, ':', lhs, '= 0'
-print
+
+def create_matrices(eqs, vars):
+    A, b = [], []
+    vars_zero = dict((var, 0) for var in vars)
+    for eq in eqs:
+        line = [eq.subs(var, 1) - eq.subs(var, 0) for var in vars]
+        A.append(line)
+        b.append(eq.subs(vars_zero))
+    return A, b
+
+A, b = create_matrices(eqs, vars)
+eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
+for e, v, r in zip(*eqs_str):
+    print '[%s][%s]  =  %s' % (e, v, r)
 
 """
 Literatur:
