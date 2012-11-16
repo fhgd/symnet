@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 from pyparsing import *
+from sympy import *
 
 class Graph(object):
     def __init__(self, name=''):
@@ -96,11 +97,15 @@ g.add_branch('R1', 'A', 'L')
 g.add_branch('R2', 'L', '0')
 g.add_branch('R3', 'A', 'R')
 g.add_branch('R4', 'R', '0')
-g.add_branch('Iq', 'L', 'R')
+g.add_branch('Rm', 'L', 'R')
+#~ g.add_branch('Iq', 'L', 'R')
 
-tree = g.tree(['R1', 'Iq', 'R2'])
+#~ tree = g.tree(['R1', 'Iq', 'R2'])
 #~ tree = g.tree(['R1', 'Iq', 'R4'])
 #~ tree = g.tree(['V1', 'R1', 'R4'])
+
+tree = g.tree(['V1', 'Rm', 'R4'])
+
 
 
 print 'Maschen der Nichtbaumzweige:'
@@ -735,6 +740,15 @@ class resistor(branch_element):
         ## I = U/R
         return self.u/self.param
 
+class conductance(branch_element):
+    def setup(self):
+        self.param = Symbol(self.name)
+    def get_u(self):
+        return self.u
+    def get_i(self):
+        ## I = G*U
+        return self.param*self.u
+
 class current_source(branch_element):
     def setup(self):
         self.param = Symbol(self.name+'_0')
@@ -802,7 +816,7 @@ class network:
         self.gnd_name = gnd
         COMMENT = "*" + Optional(restOfLine)
         NAME = Word(alphanums+"_")
-        TYPE = oneOf('R L C I V',caseless=True)
+        TYPE = oneOf('R G L C I V',caseless=True)
         ELEMENT = Combine(TYPE+NAME)
         NETLIST = Dict(ZeroOrMore( Group(ELEMENT + NAME + NAME) ))
         NETLIST.ignore(COMMENT)
@@ -834,6 +848,8 @@ class network:
             ## Make instance of the right branch-class
             if element == 'R':
                 self.branchSet[branch] = resistor(branch)
+            elif element == 'G':
+                self.branchSet[branch] = conductance(branch)
             elif element == 'I':
                 self.branchSet[branch] = current_source(branch)
             elif element == 'V':
@@ -950,8 +966,8 @@ class network:
             result[v] = collect(together((det_var[v] / det).expand()), self.var_source)
         return result
 
-#~ if __name__ == '__main__':
-if False:
+if __name__ == '__main__':
+#~ if False:
     nw = network()
     #nw.parseNetlist("par.cir")
     nw.parseNetlist("bridge.cir")
