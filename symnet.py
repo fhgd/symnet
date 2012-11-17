@@ -203,6 +203,16 @@ Idee zu den Zweigen:
         b.controlled_branch     # für gesteuerte Quellen
 
     Klasse muss aber *immutable* sein!
+
+Gesteuerte Quelle:
+    Schnittanalyse:
+        I(u) keine Extrabehandlung
+        I(i) Beim Einsetzen der Zweigrelationen den Steuerstrom i = f_i(u)
+             mit ersetzten
+        U(u) Gleichung U_branch - U(u) = 0 aufstellen und U_branch, u durch
+             Baumspannungen ersetzen.
+        U(i) Gleichung U_branch - U(i) = 0 aufstellen, den Steuerstrom i = f_i(u)
+             ersetzen und dann U_branch und u durch Baumspannungen ersetzen.
 """
 
 if __name__ == '__main__':
