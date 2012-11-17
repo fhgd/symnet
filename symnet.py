@@ -92,7 +92,7 @@ class Graph(object):
         return lpos, lneg
 
 def f_u(brn):
-    """Voltage of branch brn"""
+    """Return the voltage of branch brn"""
     type = brn[0]
     name = brn[1:]
     if type == 'R':
@@ -106,7 +106,7 @@ def f_u(brn):
         return 'V_'+brn
 
 def f_i(brn):
-    """Current of branch brn"""
+    """Return the current of branch brn"""
     type = brn[0]
     name = brn[1:]
     if type == 'G':
@@ -119,6 +119,20 @@ def f_i(brn):
     else:
         return 'I_'+brn
 
+def branch_voltage(brn):
+    """Return the branch voltage symbol"""
+    if brn[0] != 'V':
+        return 'V_'+brn
+    else:
+        return brn
+
+def branch_current(brn):
+    """Return the branch current symbol"""
+    if brn[0] != 'I':
+        return 'I_'+brn
+    else:
+        return brn
+
 def cut_analysis(g, tree):
     """Cut analysis respect to the tree of the network graph g"""
     covss = {}
@@ -126,20 +140,21 @@ def cut_analysis(g, tree):
     for cobranch in g.branches() - tree.branches():
         lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = ' + '.join(['V_'+b for b in lneg])
-        rhs_neg = ''.join(['- V_'+b for b in lpos])
+        rhs_pos = [branch_voltage(b) for b in lneg]
+        rhs_neg = [branch_voltage(b) for b in lpos]
+        loop_equ = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if cobranch[0] != 'V':
-            covolts[Calculus('V_'+cobranch)] = Calculus(rhs_pos+rhs_neg)
+            covolts[Calculus('V_'+cobranch)] = loop_equ
         else:
-            covss[cobranch] = Calculus(rhs_pos+rhs_neg)
+            covss[cobranch] = loop_equ
     eqs = []
     vars = []
     for tb in tree.branches():
         if tb[0] != 'V':
             bpos, bneg = g.cut(tb, tree)
-            lhs_pos = ' + '.join([f_i(b) for b in bpos])
-            lhs_neg = ''.join(['- '+f_i(b) for b in bneg])
-            lhs = Calculus(lhs_pos+lhs_neg)
+            lhs_pos = [f_i(b) for b in bpos]
+            lhs_neg = [f_i(b) for b in bneg]
+            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             lhs = lhs.subs(covolts)
             lhs = lhs.expand()
             eqs.append(lhs)
@@ -156,20 +171,21 @@ def loop_analysis(g, tree):
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = ' + '.join(['I_'+b for b in bneg])
-        rhs_neg = ''.join(['- I_'+b for b in bpos])
+        rhs_pos = [branch_current(b) for b in bneg]
+        rhs_neg = [branch_current(b) for b in bpos]
+        cut_equ = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if tb[0] != 'I':
-            tcur[Calculus('I_'+tb)] = Calculus(rhs_pos+rhs_neg)
+            tcur[Calculus('I_'+tb)] = cut_equ
         else:
-            tcss[tb] = Calculus(rhs_pos+rhs_neg)
+            tcss[tb] = cut_equ
     eqs = []
     vars = []
     for cobranch in g.branches() - tree.branches():
         if cobranch[0] != 'I':
             lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
-            lhs_pos = ' + '.join([f_u(b) for b in lpos])
-            lhs_neg = ''.join(['- '+f_u(b) for b in lneg])
-            lhs = Calculus(lhs_pos+lhs_neg)
+            lhs_pos = [f_u(b) for b in lpos]
+            lhs_neg = [f_u(b) for b in lneg]
+            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             lhs = lhs.subs(tcur)
             lhs = lhs.expand()
             eqs.append(lhs)
@@ -238,7 +254,7 @@ if __name__ == '__main__':
     #~ tree = g.tree(['V1', 'R1', 'R4'])
 
     #~ tree = g.tree(['V1', 'Rm', 'R4'])
-    #~ tree = g.tree(['V1', 'R2', 'R4'])
+    tree = g.tree(['V1', 'R2', 'R4'])
 
     print 'Maschen der Nichtbaumzweige:'
     for cobranch in g.branches() - tree.branches():
