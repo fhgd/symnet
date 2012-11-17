@@ -204,7 +204,11 @@ Idee zu den Zweigen:
 
     Klasse muss aber *immutable* sein!
 
-Gesteuerte Quelle:
+Gesteuerte Quellen:
+
+    Alternative zur extra Klasse: steuernder Zweig mit im Namen angeben,
+    zBsp.: 'G2(R3)'
+
     Schnittanalyse:
         I(u) keine Extrabehandlung
         I(i) Beim Einsetzen der Zweigrelationen den Steuerstrom i = f_i(u)
