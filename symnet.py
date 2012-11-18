@@ -91,29 +91,35 @@ class Graph(object):
             lpos.add(cb)
         return lpos, lneg
 
+def branch_name(brn):
+    """Return the branch name"""
+    if brn[0] == 'G':
+        name, _, ctrl = brn.partition('(')
+        return name
+    else:
+        return brn
+
 def f_u(brn):
     """Return the voltage of branch brn"""
     type = brn[0]
     name = brn[1:]
     if type == 'R':
         return brn+'*I_'+brn
-    elif type == 'G':
-        #~ return 'I_'+brn+'/'+brn
-        return 'R'+name+'*I_'+brn
     elif type == 'V':
         return brn
     else:
-        return 'V_'+brn
+        return 'V_'+branch_name(brn)
 
 def f_i(brn):
     """Return the current of branch brn"""
     type = brn[0]
-    name = brn[1:]
     if type == 'G':
-        return brn+'*V_'+brn
+        name, ctrl = brn.split('(')
+        ctrl = ctrl.split(')')[0]
+        return name+'*V_'+ctrl
     elif type == 'R':
         #~ return 'V_'+brn+'/'+brn
-        return 'G'+name+'*V_'+brn
+        return 'G'+brn[1:]+'*V_'+brn
     elif type == 'I':
         return brn
     else:
@@ -122,16 +128,20 @@ def f_i(brn):
 def branch_voltage(brn):
     """Return the branch voltage symbol"""
     if brn[0] != 'V':
-        return 'V_'+brn
+        return 'V_'+branch_name(brn)
     else:
         return brn
 
 def branch_current(brn):
     """Return the branch current symbol"""
-    if brn[0] != 'I':
-        return 'I_'+brn
-    else:
+    if brn[0] not in 'IG':
+        return 'I_'+branch_name(brn)
+    elif brn[0] == 'I':
         return brn
+    elif brn[0] == 'G':
+        name, ctrl = brn.split('(')
+        ctrl = ctrl.split(')')[0]
+        return f_i(brn).replace('V_'+ctrl, '('+f_u(ctrl)+')')
 
 def cut_analysis(g, tree):
     """Cut analysis respect to the tree of the network graph g"""
@@ -145,7 +155,7 @@ def cut_analysis(g, tree):
         rhs_neg = [branch_voltage(b) for b in lpos]
         loop_equ = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if cobranch[0] != 'V':
-            covolts[Calculus('V_'+cobranch)] = loop_equ
+            covolts[Calculus('V_'+branch_name(cobranch))] = loop_equ
         else:
             eqs.append(loop_equ - Calculus(cobranch))
             vars.append(Calculus('I_'+cobranch))
@@ -158,35 +168,35 @@ def cut_analysis(g, tree):
             lhs = lhs.subs(covolts)
             lhs = lhs.expand()
             eqs.append(lhs)
-            vars.append(Calculus('V_'+tb))
+            vars.append(Calculus('V_'+branch_name(tb)))
     return eqs, vars
 
 def loop_analysis(g, tree):
     """Loop analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
+    for cobranch in g.branches() - tree.branches():
+        if cobranch[0] not in 'IG':
+            lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
+            lhs_pos = [f_u(b) for b in lpos]
+            lhs_neg = [f_u(b) for b in lneg]
+            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+            eqs.append(lhs)
+            vars.append(Calculus('I_'+branch_name(cobranch)))
     tcur = {}
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = [branch_current(b) for b in bneg]
         rhs_neg = [branch_current(b) for b in bpos]
-        cut_equ = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
-        if tb[0] != 'I':
-            tcur[Calculus('I_'+tb)] = cut_equ
+        rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
+        if tb[0] not in 'IG':
+            tcur[Calculus('I_'+branch_name(tb))] = rhs
         else:
-            eqs.append(cut_equ - Calculus(tb))
-            vars.append(Calculus('V_'+tb))
-    for cobranch in g.branches() - tree.branches():
-        if cobranch[0] != 'I':
-            lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
-            lhs_pos = [f_u(b) for b in lpos]
-            lhs_neg = [f_u(b) for b in lneg]
-            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-            lhs = lhs.subs(tcur)
-            lhs = lhs.expand()
-            eqs.append(lhs)
-            vars.append(Calculus('I_'+cobranch))
+            eqs.append(Calculus(branch_current(tb)) - rhs)
+            vars.append(Calculus('V_'+branch_name(tb)))
+    tcur.update((b, e.subs(tcur)) for b, e in tcur.items())
+    eqs = [e.subs(tcur).expand() for e in eqs]
     return eqs, vars
 
 def create_matrices(eqs, vars):
@@ -227,7 +237,18 @@ Gesteuerte Quellen:
              Baumspannungen ersetzen.
         U(i) Gleichung U_branch - U(i) = 0 aufstellen, den Steuerstrom i = f_i(u)
              ersetzen und dann U_branch und u durch Baumspannungen ersetzen.
+
+    Maschenanalyse:
+        U(i) keine Extrabehandlung
+        U(u) Beim Einsetzen der Zweigrelationen die Steuerspannung u = f_u(i)
+             mit ersetzten
+        I(i) Gleichung I_branch - I(u) = 0 aufstellen und I_branch, i durch
+             Cobaumströme ersetzen.
+        I(u) Schnittgleichung I_branch - I(u) = 0 aufstellen, die Steuerspannung
+             u = f_u(i) ersetzen und dann I_branch und i durch Cobaumströme
+             ersetzen.
 """
+
 
 if __name__ == '__main__':
     from sympycore import Matrix
@@ -238,13 +259,14 @@ if __name__ == '__main__':
     g.add_branch('R2', 'L', '0')
     g.add_branch('R3', 'A', 'R')
     g.add_branch('R4', 'R', '0')
-    #~ g.add_branch('Rm', 'L', 'R')
-    g.add_branch('Iq', 'L', 'R')
+    #~ g.add_branch('Iq', 'L', 'R')
+    g.add_branch('GM(R2)', 'L', 'R')
+    #~ g.add_branch('RM', 'L', 'R')
 
-    tree = g.tree(['R1', 'Iq', 'R2'])
+    #~ tree = g.tree(['R1', 'Iq', 'R2'])
     #~ tree = g.tree(['R1', 'R2', 'R3'])
 
-    #~ tree = g.tree(['R1', 'Iq', 'R4'])
+    tree = g.tree(['R1', 'R2', 'R3'])
     #~ tree = g.tree(['V1', 'R1', 'R4'])
 
     #~ tree = g.tree(['V1', 'Rm', 'R4'])
@@ -292,9 +314,9 @@ if __name__ == '__main__':
     print 'Maschengleichungen mit CoBaumStrömen und'
     print 'Schnittgleichungen der Baum-Stromquellen:'
     eqs, vars = loop_analysis(g, tree)
-    # reversed order: first loop-, then cut-eqs
-    eqs = eqs[::-1]
-    vars = vars[::-1]
+    #~ # reversed order: first loop-, then cut-eqs
+    #~ eqs = eqs[::-1]
+    #~ vars = vars[::-1]
     A, b = create_matrices(eqs, vars)
     # pretty print of the matrix equation
     eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
