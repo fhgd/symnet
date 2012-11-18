@@ -135,7 +135,8 @@ def branch_current(brn):
 
 def cut_analysis(g, tree):
     """Cut analysis respect to the tree of the network graph g"""
-    covss = {}
+    eqs = []
+    vars = []
     covolts = {}
     for cobranch in g.branches() - tree.branches():
         lpos, lneg = g.loop(cobranch, tree)
@@ -146,9 +147,8 @@ def cut_analysis(g, tree):
         if cobranch[0] != 'V':
             covolts[Calculus('V_'+cobranch)] = loop_equ
         else:
-            covss[cobranch] = loop_equ
-    eqs = []
-    vars = []
+            eqs.append(loop_equ - Calculus(cobranch))
+            vars.append(Calculus('I_'+cobranch))
     for tb in tree.branches():
         if tb[0] != 'V':
             bpos, bneg = g.cut(tb, tree)
@@ -159,14 +159,12 @@ def cut_analysis(g, tree):
             lhs = lhs.expand()
             eqs.append(lhs)
             vars.append(Calculus('V_'+tb))
-    for cb, val in covss.items():
-        eqs.append(val - Calculus(cb))
-        vars.append(Calculus('I_'+cb))
     return eqs, vars
 
 def loop_analysis(g, tree):
     """Loop analysis respect to the tree of the network graph g"""
-    tcss = {}
+    eqs = []
+    vars = []
     tcur = {}
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
@@ -177,9 +175,8 @@ def loop_analysis(g, tree):
         if tb[0] != 'I':
             tcur[Calculus('I_'+tb)] = cut_equ
         else:
-            tcss[tb] = cut_equ
-    eqs = []
-    vars = []
+            eqs.append(cut_equ - Calculus(tb))
+            vars.append(Calculus('V_'+tb))
     for cobranch in g.branches() - tree.branches():
         if cobranch[0] != 'I':
             lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
@@ -190,9 +187,6 @@ def loop_analysis(g, tree):
             lhs = lhs.expand()
             eqs.append(lhs)
             vars.append(Calculus('I_'+cobranch))
-    for b, val in tcss.items():
-        eqs.append(val - Calculus(b))
-        vars.append(Calculus('V_'+b))
     return eqs, vars
 
 def create_matrices(eqs, vars):
@@ -254,7 +248,7 @@ if __name__ == '__main__':
     #~ tree = g.tree(['V1', 'R1', 'R4'])
 
     #~ tree = g.tree(['V1', 'Rm', 'R4'])
-    tree = g.tree(['V1', 'R2', 'R4'])
+    #~ tree = g.tree(['V1', 'R2', 'R4'])
 
     print 'Maschen der Nichtbaumzweige:'
     for cobranch in g.branches() - tree.branches():
@@ -285,6 +279,9 @@ if __name__ == '__main__':
     print 'Schnittgleichungen mit Baumspannungen und'
     print 'Maschengleichungen der Nichtbaum-Spannungsquellen:'
     eqs, vars = cut_analysis(g, tree)
+    # reversed order: first cut-, then loop-eqs
+    eqs = eqs[::-1]
+    vars = vars[::-1]
     A, b = create_matrices(eqs, vars)
     # pretty print of the matrix equation
     eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
@@ -295,6 +292,9 @@ if __name__ == '__main__':
     print 'Maschengleichungen mit CoBaumStrömen und'
     print 'Schnittgleichungen der Baum-Stromquellen:'
     eqs, vars = loop_analysis(g, tree)
+    # reversed order: first loop-, then cut-eqs
+    eqs = eqs[::-1]
+    vars = vars[::-1]
     A, b = create_matrices(eqs, vars)
     # pretty print of the matrix equation
     eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
