@@ -300,6 +300,10 @@ if __name__ == '__main__':
     eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
     for e, v, r in zip(*eqs_str):
         print '[%s] [%s]   =  %s' % (e, v, r)
+    if len(eqs) > len(vars):
+        print '\n!!! Zuwenig Unbekannte !!!'
+    if len(eqs) < len(vars):
+        print '\n!!! Zuwenig Gleichungen !!!'
 
 """
 Literatur:
