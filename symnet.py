@@ -47,7 +47,7 @@ class Graph(object):
             if tree.nodes() == self.nodes():
                 return tree
             else:
-                raise Exceptin, 'Tree does not contain all nodes'
+                raise Exception, 'Tree does not contain all nodes'
         else:
             raise Exception, 'Tree does not contain %i - 1 branches.' % len(self.nodes())
 
