@@ -147,28 +147,31 @@ def cut_analysis(g, tree):
     """Cut analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
+    ctrl_branches = []
+    # cut equations of the tree currents
+    for tb in tree.branches():
+        if tb[0] not in 'V':
+            bpos, bneg = g.cut(tb, tree)
+            lhs_pos = [f_i(b) for b in bpos]
+            lhs_neg = [f_i(b) for b in bneg]
+            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+            eqs.append(lhs)
+            vars.append(Calculus('V_'+branch_name(tb)))
     covolts = {}
     for cobranch in g.branches() - tree.branches():
         lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = [branch_voltage(b) for b in lneg]
         rhs_neg = [branch_voltage(b) for b in lpos]
-        loop_equ = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
-        if cobranch[0] != 'V':
-            covolts[Calculus('V_'+branch_name(cobranch))] = loop_equ
-        else:
-            eqs.append(loop_equ - Calculus(cobranch))
-            vars.append(Calculus('I_'+cobranch))
-    for tb in tree.branches():
-        if tb[0] != 'V':
-            bpos, bneg = g.cut(tb, tree)
-            lhs_pos = [f_i(b) for b in bpos]
-            lhs_neg = [f_i(b) for b in bneg]
-            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-            lhs = lhs.subs(covolts)
-            lhs = lhs.expand()
-            eqs.append(lhs)
-            vars.append(Calculus('V_'+branch_name(tb)))
+        rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
+        if cobranch[0] not in 'V':
+            covolts[Calculus('V_'+branch_name(cobranch))] = rhs
+        elif cobranch[0] in 'V':
+            eqs.append(Calculus(branch_voltage(cobranch)) - rhs)
+            vars.append(Calculus('I_'+branch_name(cobranch)))
+    for ctrl in ctrl_branches:
+        pass
+    eqs = [e.subs(covolts).expand() for e in eqs]
     return eqs, vars
 
 def loop_analysis(g, tree):
