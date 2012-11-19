@@ -94,7 +94,7 @@ class Graph(object):
 def branch_name(brn):
     """Return the branch name"""
     if brn[0] == 'G':
-        name, _, ctrl = brn.partition('(')
+        name = brn.split('(')[0]
         return name
     else:
         return brn
@@ -102,7 +102,6 @@ def branch_name(brn):
 def f_u(brn):
     """Return the voltage of branch brn"""
     type = brn[0]
-    name = brn[1:]
     if type == 'R':
         return brn+'*I_'+brn
     elif type == 'V':
@@ -115,7 +114,7 @@ def f_i(brn):
     type = brn[0]
     if type == 'G':
         name, ctrl = brn.split('(')
-        ctrl = ctrl.split(')')[0]
+        ctrl = ctrl.replace(')', '')
         return name+'*V_'+ctrl
     elif type == 'R':
         #~ return 'V_'+brn+'/'+brn
@@ -134,13 +133,14 @@ def branch_voltage(brn):
 
 def branch_current(brn):
     """Return the branch current symbol"""
-    if brn[0] not in 'IG':
+    type = brn[0]
+    if type not in 'IG':
         return 'I_'+branch_name(brn)
-    elif brn[0] == 'I':
+    elif type == 'I':
         return brn
-    elif brn[0] == 'G':
+    elif type == 'G':
         name, ctrl = brn.split('(')
-        ctrl = ctrl.split(')')[0]
+        ctrl = ctrl.replace(')', '')
         return f_i(brn)#.replace('V_'+ctrl, '('+f_u(ctrl)+')')
 
 def cut_analysis(g, tree):
@@ -191,7 +191,7 @@ def loop_analysis(g, tree):
             vars.append(Calculus('I_'+branch_name(cobranch)))
         elif cobranch[0] in 'G':
             name, ctrl = cobranch.split('(')
-            ctrl = ctrl.split(')')[0]
+            ctrl = ctrl.replace(')', '')
             # Reconstruct branch name if ctrl is a dependent source
             ctrl = [b for b in g.branches() if b.startswith(ctrl)]
             if len(ctrl) == 1:
@@ -216,7 +216,7 @@ def loop_analysis(g, tree):
             eqs.append(Calculus(branch_current(tb)) - rhs)
             vars.append(Calculus('V_'+branch_name(tb)))
             name, ctrl = tb.split('(')
-            ctrl = ctrl.split(')')[0]
+            ctrl = ctrl.replace(')', '')
             # Reconstruct branch name if ctrl is a dependent source
             ctrl = [b for b in g.branches() if b.startswith(ctrl)]
             if len(ctrl) == 1:
