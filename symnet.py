@@ -118,7 +118,7 @@ def f_i(brn):
         return name+'*V_'+ctrl
     elif type == 'R':
         #~ return 'V_'+brn+'/'+brn
-        return 'G'+brn[1:]+'*V_'+brn
+        return 'G_'+brn+'*V_'+brn
     elif type == 'I':
         return brn
     else:
