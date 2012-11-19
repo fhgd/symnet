@@ -141,7 +141,7 @@ def branch_current(brn):
     elif brn[0] == 'G':
         name, ctrl = brn.split('(')
         ctrl = ctrl.split(')')[0]
-        return f_i(brn).replace('V_'+ctrl, '('+f_u(ctrl)+')')
+        return f_i(brn)#.replace('V_'+ctrl, '('+f_u(ctrl)+')')
 
 def cut_analysis(g, tree):
     """Cut analysis respect to the tree of the network graph g"""
@@ -175,7 +175,10 @@ def loop_analysis(g, tree):
     """Loop analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
-    for cobranch in g.branches() - tree.branches():
+    ctrl_branches = []
+    # loop equations of the cobranch voltages
+    cobranches = g.branches() - tree.branches()
+    for cobranch in cobranches:
         if cobranch[0] not in 'IG':
             lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
             lhs_pos = [f_u(b) for b in lpos]
@@ -183,6 +186,17 @@ def loop_analysis(g, tree):
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
             vars.append(Calculus('I_'+branch_name(cobranch)))
+        elif cobranch[0] in 'G':
+            name, ctrl = cobranch.split('(')
+            ctrl = ctrl.split(')')[0]
+            # Reconstruct branch name if ctrl is a dependent source
+            ctrl = [b for b in g.branches() if b.startswith(ctrl)]
+            if len(ctrl) == 1:
+                ctrl = ctrl[0]
+            else:
+                raise Exception, 'Too many branches starting with:', ctrl
+            ctrl_branches.append(ctrl)
+    # cut equations of the tree currents (for substitution or additional)
     tcur = {}
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
@@ -192,10 +206,44 @@ def loop_analysis(g, tree):
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if tb[0] not in 'IG':
             tcur[Calculus('I_'+branch_name(tb))] = rhs
-        else:
+        elif tb[0] in 'I':
             eqs.append(Calculus(branch_current(tb)) - rhs)
             vars.append(Calculus('V_'+branch_name(tb)))
-    tcur.update((b, e.subs(tcur)) for b, e in tcur.items())
+        elif tb[0] in 'G':
+            eqs.append(Calculus(branch_current(tb)) - rhs)
+            vars.append(Calculus('V_'+branch_name(tb)))
+            name, ctrl = tb.split('(')
+            ctrl = ctrl.split(')')[0]
+            # Reconstruct branch name if ctrl is a dependent source
+            ctrl = [b for b in g.branches() if b.startswith(ctrl)]
+            if len(ctrl) == 1:
+                ctrl = ctrl[0]
+            else:
+                raise Exception, 'Too many branches starting with:', ctrl
+            if tb != ctrl:
+                ctrl_branches.append(ctrl)
+    # finally adding equations and variables of the control branches
+    for ctrl in ctrl_branches:
+        v_ctrl = Calculus('V_'+branch_name(ctrl))
+        # control voltage is unknown
+        vars.append(v_ctrl)
+        # try if control voltage can be substituted
+        lhs = v_ctrl - f_u(ctrl)
+        if lhs == 0:
+            if ctrl in cobranches:
+                # add loop equation for control voltage
+                lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
+                lhs_pos = [f_u(b) for b in lpos]
+                lhs_neg = [f_u(b) for b in lneg]
+                lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+            else:
+                # add cut equation for control branch
+                i_ctrl = Calculus(branch_current(ctrl))
+                bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
+                lhs_pos = [branch_current(b) for b in bpos]
+                lhs_neg = [branch_current(b) for b in bneg]
+                lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+        eqs.append(lhs)
     eqs = [e.subs(tcur).expand() for e in eqs]
     return eqs, vars
 
@@ -254,20 +302,21 @@ if __name__ == '__main__':
     from sympycore import Matrix
 
     g = Graph()
-    g.add_branch('V1', 'A', '0')
+    #~ g.add_branch('V1', 'A', '0')
+    g.add_branch('IQ', 'A', '0')
     g.add_branch('R1', 'A', 'L')
     g.add_branch('R2', 'L', '0')
     g.add_branch('R3', 'A', 'R')
     g.add_branch('R4', 'R', '0')
-    #~ g.add_branch('Iq', 'L', 'R')
-    g.add_branch('GM(R2)', 'L', 'R')
     #~ g.add_branch('RM', 'L', 'R')
+    #~ g.add_branch('Iq', 'L', 'R')
+    g.add_branch('GM(R1)', 'L', 'R')
+
+    tree = g.tree(['R1', 'GM(R1)', 'R4'])
+    #~ tree = g.tree(['I1', 'R1', 'R4'])
 
     #~ tree = g.tree(['R1', 'Iq', 'R2'])
     #~ tree = g.tree(['R1', 'R2', 'R3'])
-
-    tree = g.tree(['R1', 'R2', 'R3'])
-    #~ tree = g.tree(['V1', 'R1', 'R4'])
 
     #~ tree = g.tree(['V1', 'Rm', 'R4'])
     #~ tree = g.tree(['V1', 'R2', 'R4'])
