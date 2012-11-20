@@ -252,6 +252,8 @@ def loop_analysis(g, tree):
 
 def create_matrices(eqs, vars):
     """Convert the linear equations eqs = 0 into Ax = b with x = vars"""
+    # every var in vars must be unique
+    # vars == set(vars)
     A, b = [], []
     vars_zero = dict((var, 0) for var in vars)
     for eq in eqs:
