@@ -95,27 +95,31 @@ def f_u(brn, ctrl_src):
     """Return the voltage of branch brn"""
     type = brn[0]
     if type == 'R':
-        return brn+'*'+branch_current(brn)
+        return brn+'*I_'+brn
     elif type == 'H':
-        return brn+'*'+branch_current(ctrl_src[brn])
+        return brn+'*'+branch_current(ctrl_src[brn], ctrl_src)
     elif type == 'E':
-        return brn+'*'+branch_voltage(ctrl_src[brn])
+        return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src)
+    elif type == 'V':
+        return brn
     else:
-        return branch_voltage(brn)
+        return 'V_'+brn
 
 def f_i(brn, ctrl_src):
     """Return the current of branch brn"""
     type = brn[0]
     if type == 'R':
-        return 'G_'+brn+'*'+branch_voltage(brn)
+        return 'G_'+brn+'*V_'+brn
     elif type == 'G':
-        return brn+'*'+branch_voltage(ctrl_src[brn])
+        return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src)
     elif type == 'F':
-        return brn+'*'+branch_current(ctrl_src[brn])
+        return brn+'*'+branch_current(ctrl_src[brn], ctrl_src)
+    elif type == 'I':
+        return brn
     else:
-        return branch_current(brn)
+        return 'I_'+brn
 
-def branch_voltage(brn):
+def branch_voltage(brn, ctrl_src):
     """Return the branch voltage symbol"""
     type = brn[0]
     if type in 'V':
@@ -123,11 +127,13 @@ def branch_voltage(brn):
     else:
         return 'V_'+brn
 
-def branch_current(brn):
+def branch_current(brn, ctrl_src):
     """Return the branch current symbol"""
     type = brn[0]
     if type in 'I':
         return brn
+    elif type in 'G':
+        return f_i(brn, ctrl_src)
     else:
         return 'I_'+brn
 
@@ -149,13 +155,13 @@ def cut_analysis(g, tree):
     for cobranch in g.branches() - tree.branches():
         lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = [branch_voltage(b) for b in lneg]
-        rhs_neg = [branch_voltage(b) for b in lpos]
+        rhs_pos = [branch_voltage(b, ctrl_src) for b in lneg]
+        rhs_neg = [branch_voltage(b, ctrl_src) for b in lpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if cobranch[0] not in 'V':
             covolts[Calculus('V_'+cobranch)] = rhs
         elif cobranch[0] in 'V':
-            eqs.append(Calculus(branch_voltage(cobranch)) - rhs)
+            eqs.append(Calculus(cobranch) - rhs)
             vars.append(Calculus('I_'+cobranch))
     for ctrl in ctrl_branches:
         pass
@@ -189,8 +195,8 @@ def loop_analysis(g, ctrl_src, tree):
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = [branch_current(b) for b in bneg]
-        rhs_neg = [branch_current(b) for b in bpos]
+        rhs_pos = [branch_current(b, ctrl_src) for b in bneg]
+        rhs_neg = [branch_current(b, ctrl_src) for b in bpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if tb[0] not in 'IFG' and tb not in ctrl_cur:
             tcur[Calculus('I_'+tb)] = rhs
@@ -203,24 +209,24 @@ def loop_analysis(g, ctrl_src, tree):
             eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
             vars.append(Calculus('V_'+tb))
             ctrl_volts.append(ctrl_src[tb])
-    print
-    print vars
-    print eqs
-    print
-    print tcur
-    print
+    #~ print
+    #~ print vars
+    #~ print eqs
+    #~ print
+    #~ print tcur
+    #~ print
     #~ print ctrl_cur
     #~ print
     # finally adding equations and variables of the control branches
     # control currents
     for ctrl in ctrl_cur:
-        i_ctrl = Calculus(branch_current(ctrl))
+        i_ctrl = Calculus('I_'+ctrl)
         if ctrl[0] not in 'I' and i_ctrl not in vars:
             # control voltage is unknown
             vars.append(i_ctrl)
             if ctrl in cobranches:
                 # add loop equation for control voltage
-                v_ctrl = Calculus(branch_current(ctrl))
+                v_ctrl = Calculus('V_'+ctrl)
                 lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
                 lhs_pos = [f_u(b) for b in lpos]
                 lhs_neg = [f_u(b) for b in lneg]
@@ -228,8 +234,8 @@ def loop_analysis(g, ctrl_src, tree):
             else:
                 # add cut equation for control branch
                 bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                lhs_pos = [branch_current(b) for b in bpos]
-                lhs_neg = [branch_current(b) for b in bneg]
+                lhs_pos = [branch_current(b, ctrl_src) for b in bpos]
+                lhs_neg = [branch_current(b, ctrl_src) for b in bneg]
                 lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
                 print lhs
             eqs.append(lhs)
@@ -250,10 +256,10 @@ def loop_analysis(g, ctrl_src, tree):
                     lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
                 else:
                     # add cut equation for control branch
-                    i_ctrl = Calculus(branch_current(ctrl))
+                    i_ctrl = Calculus('I_'+ctrl)
                     bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                    lhs_pos = [branch_current(b) for b in bpos]
-                    lhs_neg = [branch_current(b) for b in bneg]
+                    lhs_pos = [branch_current(b, ctrl_src) for b in bpos]
+                    lhs_neg = [branch_current(b, ctrl_src) for b in bneg]
                     lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
     eqs = [e.subs(tcur).expand() for e in eqs]
@@ -331,7 +337,7 @@ if __name__ == '__main__':
     ctrl_src = {'GM' : 'R1'}
     tree = g.tree(['R1', 'GM', 'R4'])
 
-    ctrl_src = {'GM' : 'R1'}
+    ctrl_src = {'GM' : 'VQ'}
     tree = g.tree(['R1', 'VQ', 'R4'])
 
     #~ tree = g.tree(['R1', 'Iq', 'R2'])
