@@ -326,51 +326,28 @@ if __name__ == '__main__':
     #~ tree = g.tree(['V1', 'Rm', 'R4'])
     #~ tree = g.tree(['V1', 'R2', 'R4'])
 
-    print 'Maschen der Nichtbaumzweige:'
+    print '* Maschen der Nichtbaumzweige:'
     for cobranch in g.branches() - tree.branches():
         lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
         rhs_pos = ' + '.join(['V_'+b for b in lneg])
         rhs_neg = ''.join([' - V_'+b for b in lpos])
         print 'V_'+cobranch, '=', rhs_pos+rhs_neg
-    print
-
-    print 'Schnitte der Baumzweige:'
+    print '* Schnitte der Baumzweige:'
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree)
         lhs_pos = ' + '.join(['I_'+b for b in bpos])
         lhs_neg = ''.join([' - I_'+b for b in bneg])
         print tb, ':', lhs_pos+lhs_neg, '= 0'
-    print
-
-
-    print 'Schnittgleichungen mit Zweigrelationen:'
-    for tb in tree.branches():
-        bpos, bneg = g.cut(tb, tree)
-        lhs_pos = ' + '.join([f_i(b, ctrl_src) for b in bpos])
-        lhs_neg = ''.join([' - '+f_i(b, ctrl_src) for b in bneg])
-        print tb, ':', lhs_pos+lhs_neg, '= 0'
-    print
-
-    print 'Schnittgleichungen mit Baumspannungen und'
-    print 'Maschengleichungen der Nichtbaum-Spannungsquellen:'
+    print '* Schnittanalyse:'
     eqs, vars = cut_analysis(g, tree)
-    # reversed order: first cut-, then loop-eqs
-    eqs = eqs[::-1]
-    vars = vars[::-1]
     A, b = create_matrices(eqs, vars)
     # pretty print of the matrix equation
     eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
     for e, v, r in zip(*eqs_str):
         print '[%s] [%s]   =  %s' % (e, v, r)
-    print
-
-    print 'Maschengleichungen mit CoBaumStrömen und'
-    print 'Schnittgleichungen der Baum-Stromquellen:'
+    print '* Maschenanalyse:'
     eqs, vars = loop_analysis(g, ctrl_src, tree)
-    #~ # reversed order: first loop-, then cut-eqs
-    #~ eqs = eqs[::-1]
-    #~ vars = vars[::-1]
     A, b = create_matrices(eqs, vars)
     # pretty print of the matrix equation
     eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
