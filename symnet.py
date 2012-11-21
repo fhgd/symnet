@@ -109,9 +109,7 @@ def f_i(brn, ctrl_src):
     """Return the current of branch brn"""
     type = brn[0]
     if type == 'F':
-        name, ctrl = brn.split('(')
-        ctrl = ctrl.replace(')', '')
-        return name+'*'+branch_current(ctrl)
+        return brn+'*'+branch_current(ctrl_src[brn])
     elif type == 'G':
         name, ctrl = brn.split('(')
         ctrl = ctrl.replace(')', '')
@@ -132,14 +130,10 @@ def branch_voltage(brn):
 def branch_current(brn):
     """Return the branch current symbol"""
     type = brn[0]
-    if type not in 'IFG':
-        return 'I_'+brn
-    elif type in 'I':
+    if type in 'I':
         return brn
-    elif type in 'FG':
-        name, ctrl = brn.split('(')
-        ctrl = ctrl.replace(')', '')
-        return f_i(brn)#.replace('V_'+ctrl, '('+f_u(ctrl)+')')
+    else:
+        return 'I_'+brn
 
 def cut_analysis(g, tree):
     """Cut analysis respect to the tree of the network graph g"""
@@ -231,7 +225,7 @@ def loop_analysis(g, ctrl_src, tree):
             if tb[0] in 'E':
                 ctrl_volts.append(ctrl_src[tb])
         elif tb[0] in 'IF':
-            eqs.append(Calculus(branch_current(tb)) - rhs)
+            eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
             vars.append(Calculus('V_'+tb))
         elif tb[0] in 'G':
             eqs.append(Calculus(branch_current(tb)) - rhs)
@@ -255,6 +249,7 @@ def loop_analysis(g, ctrl_src, tree):
     #~ print ctrl_cur
     #~ print
     # finally adding equations and variables of the control branches
+    # control currents
     for ctrl in ctrl_cur:
         i_ctrl = Calculus(branch_current(ctrl))
         if ctrl[0] not in 'I' and i_ctrl not in vars:
@@ -273,8 +268,9 @@ def loop_analysis(g, ctrl_src, tree):
                 lhs_pos = [branch_current(b) for b in bpos]
                 lhs_neg = [branch_current(b) for b in bneg]
                 lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                print lhs
             eqs.append(lhs)
-    # finally adding equations and variables of the control branches
+    # control voltages
     for ctrl in ctrl_volts:
         v_ctrl = Calculus('V_'+ctrl)
         if ctrl[0] not in 'V' and v_ctrl not in vars:
@@ -367,11 +363,11 @@ if __name__ == '__main__':
     g.add_branch('R2', 'L', '0')
     g.add_branch('R3', 'A', 'R')
     g.add_branch('R4', 'R', '0')
-    g.add_branch('EM', 'L', 'R')
+    g.add_branch('FM', 'L', 'R')
 
-    ctrl_src = {'EM' : 'R2'}
+    ctrl_src = {'FM' : 'R1'}
 
-    tree = g.tree(['R1', 'EM', 'R4'])
+    tree = g.tree(['R1', 'FM', 'R4'])
 
     #~ tree = g.tree(['R1', 'Iq', 'R2'])
     #~ tree = g.tree(['R1', 'R2', 'R3'])
