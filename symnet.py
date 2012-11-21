@@ -97,9 +97,7 @@ def f_u(brn, ctrl_src):
     if type == 'R':
         return brn+'*'+branch_current(brn)
     elif type == 'H':
-        name, ctrl = brn.split('(')
-        ctrl = ctrl.replace(')', '')
-        return name+'*'+branch_current(ctrl)
+        return brn+'*'+branch_current(ctrl_src[brn])
     elif type == 'E':
         return brn+'*'+branch_voltage(ctrl_src[brn])
     else:
@@ -108,12 +106,12 @@ def f_u(brn, ctrl_src):
 def f_i(brn, ctrl_src):
     """Return the current of branch brn"""
     type = brn[0]
-    if type == 'F':
-        return brn+'*'+branch_current(ctrl_src[brn])
+    if type == 'R':
+        return 'G_'+brn+'*'+branch_voltage(brn)
     elif type == 'G':
         return brn+'*'+branch_voltage(ctrl_src[brn])
-    elif type == 'R':
-        return 'G_'+brn+'*'+branch_voltage(brn)
+    elif type == 'F':
+        return brn+'*'+branch_current(ctrl_src[brn])
     else:
         return branch_current(brn)
 
@@ -181,25 +179,9 @@ def loop_analysis(g, ctrl_src, tree):
             eqs.append(lhs)
             vars.append(Calculus('I_'+cobranch))
             if cobranch[0] in 'E':
-                name, ctrl = cobranch.split('(')
-                ctrl = ctrl.replace(')', '')
-                # Reconstruct branch name if ctrl is a dependent source
-                ctrl = [b for b in g.branches() if b.startswith(ctrl)]
-                if len(ctrl) == 1:
-                    ctrl = ctrl[0]
-                else:
-                    raise Exception, 'Too many branches starting with:', ctrl
-                ctrl_volts.append(ctrl)
+                ctrl_volts.append(ctrl_src[cobranch])
         elif cobranch[0] in 'F':
-            name, ctrl = cobranch.split('(')
-            ctrl = ctrl.replace(')', '')
-            # Reconstruct branch name if ctrl is a dependent source
-            ctrl = [b for b in g.branches() if b.startswith(ctrl)]
-            if len(ctrl) == 1:
-                ctrl = ctrl[0]
-            else:
-                raise Exception, 'Too many branches starting with:', ctrl
-            ctrl_cur.append(ctrl)
+            ctrl_cur.append(ctrl_src[cobranch])
         elif cobranch[0] in 'G':
             ctrl_volts.append(ctrl_src[cobranch])
     # cut equations of the tree currents (for substitution or additional)
