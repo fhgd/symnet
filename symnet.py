@@ -93,7 +93,7 @@ class Graph(object):
 
 def branch_name(brn):
     """Return the branch name"""
-    if brn[0] in 'FGH':
+    if brn[0] in 'EFGH':
         name = brn.split('(')[0]
         return name
     else:
@@ -108,6 +108,10 @@ def f_u(brn):
         name, ctrl = brn.split('(')
         ctrl = ctrl.replace(')', '')
         return name+'*'+branch_current(ctrl)
+    elif type == 'E':
+        name, ctrl = brn.split('(')
+        ctrl = ctrl.replace(')', '')
+        return name+'*'+branch_voltage(ctrl)
     else:
         return branch_voltage(brn)
 
@@ -129,10 +133,11 @@ def f_i(brn):
 
 def branch_voltage(brn):
     """Return the branch voltage symbol"""
-    if brn[0] != 'V':
-        return 'V_'+branch_name(brn)
-    else:
+    type = brn[0]
+    if type in 'V':
         return brn
+    else:
+        return 'V_'+branch_name(brn)
 
 def branch_current(brn):
     """Return the branch current symbol"""
@@ -193,6 +198,16 @@ def loop_analysis(g, tree):
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
             vars.append(Calculus('I_'+branch_name(cobranch)))
+            if cobranch[0] in 'E':
+                name, ctrl = cobranch.split('(')
+                ctrl = ctrl.replace(')', '')
+                # Reconstruct branch name if ctrl is a dependent source
+                ctrl = [b for b in g.branches() if b.startswith(ctrl)]
+                if len(ctrl) == 1:
+                    ctrl = ctrl[0]
+                else:
+                    raise Exception, 'Too many branches starting with:', ctrl
+                ctrl_volts.append(ctrl)
         elif cobranch[0] in 'F':
             name, ctrl = cobranch.split('(')
             ctrl = ctrl.replace(')', '')
@@ -202,8 +217,7 @@ def loop_analysis(g, tree):
                 ctrl = ctrl[0]
             else:
                 raise Exception, 'Too many branches starting with:', ctrl
-            if ctrl[0] != 'I':
-                ctrl_cur.append(ctrl)
+            ctrl_cur.append(ctrl)
         elif cobranch[0] in 'G':
             name, ctrl = cobranch.split('(')
             ctrl = ctrl.replace(')', '')
@@ -224,6 +238,16 @@ def loop_analysis(g, tree):
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if tb[0] not in 'IFG' and tb not in ctrl_cur:
             tcur[Calculus('I_'+branch_name(tb))] = rhs
+            if tb[0] in 'E':
+                name, ctrl = tb.split('(')
+                ctrl = ctrl.replace(')', '')
+                # Reconstruct branch name if ctrl is a dependent source
+                ctrl = [b for b in g.branches() if b.startswith(ctrl)]
+                if len(ctrl) == 1:
+                    ctrl = ctrl[0]
+                else:
+                    raise Exception, 'Too many branches starting with:', ctrl
+                ctrl_volts.append(ctrl)
         elif tb[0] in 'IF':
             eqs.append(Calculus(branch_current(tb)) - rhs)
             vars.append(Calculus('V_'+branch_name(tb)))
@@ -251,7 +275,7 @@ def loop_analysis(g, tree):
     # finally adding equations and variables of the control branches
     for ctrl in ctrl_cur:
         i_ctrl = Calculus(branch_current(ctrl))
-        if i_ctrl not in vars:
+        if ctrl[0] not in 'I' and i_ctrl not in vars:
             # control voltage is unknown
             vars.append(i_ctrl)
             if ctrl in cobranches:
@@ -271,25 +295,26 @@ def loop_analysis(g, tree):
     # finally adding equations and variables of the control branches
     for ctrl in ctrl_volts:
         v_ctrl = Calculus('V_'+branch_name(ctrl))
-        # control voltage is unknown
-        vars.append(v_ctrl)
-        # try if control voltage can be substituted
-        lhs = v_ctrl - f_u(ctrl)
-        if lhs == 0:
-            if ctrl in cobranches:
-                # add loop equation for control voltage
-                lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
-                lhs_pos = [f_u(b) for b in lpos]
-                lhs_neg = [f_u(b) for b in lneg]
-                lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-            else:
-                # add cut equation for control branch
-                i_ctrl = Calculus(branch_current(ctrl))
-                bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                lhs_pos = [branch_current(b) for b in bpos]
-                lhs_neg = [branch_current(b) for b in bneg]
-                lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-        eqs.append(lhs)
+        if ctrl[0] not in 'V' and v_ctrl not in vars:
+            # control voltage is unknown
+            vars.append(v_ctrl)
+            # try if control voltage can be substituted
+            lhs = v_ctrl - f_u(ctrl)
+            if lhs == 0:
+                if ctrl in cobranches:
+                    # add loop equation for control voltage
+                    lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
+                    lhs_pos = [f_u(b) for b in lpos]
+                    lhs_neg = [f_u(b) for b in lneg]
+                    lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                else:
+                    # add cut equation for control branch
+                    i_ctrl = Calculus(branch_current(ctrl))
+                    bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
+                    lhs_pos = [branch_current(b) for b in bpos]
+                    lhs_neg = [branch_current(b) for b in bneg]
+                    lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+            eqs.append(lhs)
     eqs = [e.subs(tcur).expand() for e in eqs]
     return eqs, vars
 
@@ -364,11 +389,11 @@ if __name__ == '__main__':
     #~ g.add_branch('RM', 'L', 'R')
     #~ g.add_branch('Iq', 'L', 'R')
 
-    g.add_branch('HM(VQ)', 'L', 'R')
+    g.add_branch('EM(VQ)', 'L', 'R')
     #~ g.add_branch('FM(IQ)', 'L', 'R')
 
     #~ tree = g.tree(['R1', 'R2', 'R4'])
-    tree = g.tree(['VQ', 'R1', 'R4'])
+    tree = g.tree(['R1', 'EM(VQ)', 'R4'])
 
     #~ tree = g.tree(['R1', 'Iq', 'R2'])
     #~ tree = g.tree(['R1', 'R2', 'R3'])
