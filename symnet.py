@@ -103,15 +103,13 @@ def f_u(brn):
     """Return the voltage of branch brn"""
     type = brn[0]
     if type == 'R':
-        return brn+'*I_'+brn
+        return brn+'*'+branch_current(brn)
     elif type == 'H':
         name, ctrl = brn.split('(')
         ctrl = ctrl.replace(')', '')
         return name+'*'+branch_current(ctrl)
-    elif type == 'V':
-        return brn
     else:
-        return 'V_'+branch_name(brn)
+        return branch_voltage(brn)
 
 def f_i(brn):
     """Return the current of branch brn"""
@@ -123,14 +121,11 @@ def f_i(brn):
     elif type == 'G':
         name, ctrl = brn.split('(')
         ctrl = ctrl.replace(')', '')
-        return name+'*V_'+ctrl
+        return name+'*'+branch_voltage(ctrl)
     elif type == 'R':
-        #~ return 'V_'+brn+'/'+brn
-        return 'G_'+brn+'*V_'+brn
-    elif type == 'I':
-        return brn
+        return 'G_'+brn+'*'+branch_voltage(brn)
     else:
-        return 'I_'+brn
+        return branch_current(brn)
 
 def branch_voltage(brn):
     """Return the branch voltage symbol"""
