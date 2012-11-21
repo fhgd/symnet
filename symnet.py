@@ -111,9 +111,7 @@ def f_i(brn, ctrl_src):
     if type == 'F':
         return brn+'*'+branch_current(ctrl_src[brn])
     elif type == 'G':
-        name, ctrl = brn.split('(')
-        ctrl = ctrl.replace(')', '')
-        return name+'*'+branch_voltage(ctrl)
+        return brn+'*'+branch_voltage(ctrl_src[brn])
     elif type == 'R':
         return 'G_'+brn+'*'+branch_voltage(brn)
     else:
@@ -203,15 +201,7 @@ def loop_analysis(g, ctrl_src, tree):
                 raise Exception, 'Too many branches starting with:', ctrl
             ctrl_cur.append(ctrl)
         elif cobranch[0] in 'G':
-            name, ctrl = cobranch.split('(')
-            ctrl = ctrl.replace(')', '')
-            # Reconstruct branch name if ctrl is a dependent source
-            ctrl = [b for b in g.branches() if b.startswith(ctrl)]
-            if len(ctrl) == 1:
-                ctrl = ctrl[0]
-            else:
-                raise Exception, 'Too many branches starting with:', ctrl
-            ctrl_volts.append(ctrl)
+            ctrl_volts.append(ctrl_src[cobranch])
     # cut equations of the tree currents (for substitution or additional)
     tcur = {}
     for tb in tree.branches():
@@ -228,24 +218,15 @@ def loop_analysis(g, ctrl_src, tree):
             eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
             vars.append(Calculus('V_'+tb))
         elif tb[0] in 'G':
-            eqs.append(Calculus(branch_current(tb)) - rhs)
+            eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
             vars.append(Calculus('V_'+tb))
-            name, ctrl = tb.split('(')
-            ctrl = ctrl.replace(')', '')
-            # Reconstruct branch name if ctrl is a dependent source
-            ctrl = [b for b in g.branches() if b.startswith(ctrl)]
-            if len(ctrl) == 1:
-                ctrl = ctrl[0]
-            else:
-                raise Exception, 'Too many branches starting with:', ctrl
-            if tb != ctrl:
-                ctrl_volts.append(ctrl)
-    #~ print
-    #~ print vars
-    #~ print eqs
-    #~ print
-    #~ print tcur
-    #~ print
+            ctrl_volts.append(ctrl_src[tb])
+    print
+    print vars
+    print eqs
+    print
+    print tcur
+    print
     #~ print ctrl_cur
     #~ print
     # finally adding equations and variables of the control branches
@@ -363,11 +344,13 @@ if __name__ == '__main__':
     g.add_branch('R2', 'L', '0')
     g.add_branch('R3', 'A', 'R')
     g.add_branch('R4', 'R', '0')
-    g.add_branch('FM', 'L', 'R')
+    g.add_branch('GM', 'L', 'R')
 
-    ctrl_src = {'FM' : 'R1'}
+    ctrl_src = {'GM' : 'R1'}
+    tree = g.tree(['R1', 'GM', 'R4'])
 
-    tree = g.tree(['R1', 'FM', 'R4'])
+    ctrl_src = {'GM' : 'R1'}
+    tree = g.tree(['R1', 'VQ', 'R4'])
 
     #~ tree = g.tree(['R1', 'Iq', 'R2'])
     #~ tree = g.tree(['R1', 'R2', 'R3'])
