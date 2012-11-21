@@ -93,7 +93,7 @@ class Graph(object):
 
 def branch_name(brn):
     """Return the branch name"""
-    if brn[0] in 'FG':
+    if brn[0] in 'FGH':
         name = brn.split('(')[0]
         return name
     else:
@@ -104,6 +104,10 @@ def f_u(brn):
     type = brn[0]
     if type == 'R':
         return brn+'*I_'+brn
+    elif type == 'H':
+        name, ctrl = brn.split('(')
+        ctrl = ctrl.replace(')', '')
+        return name+'*'+branch_current(ctrl)
     elif type == 'V':
         return brn
     else:
@@ -357,7 +361,7 @@ if __name__ == '__main__':
 
     g = Graph()
     #~ g.add_branch('V1', 'A', '0')
-    g.add_branch('IQ', 'A', '0')
+    g.add_branch('VQ', 'A', '0')
     g.add_branch('R1', 'A', 'L')
     g.add_branch('R2', 'L', '0')
     g.add_branch('R3', 'A', 'R')
@@ -365,11 +369,11 @@ if __name__ == '__main__':
     #~ g.add_branch('RM', 'L', 'R')
     #~ g.add_branch('Iq', 'L', 'R')
 
-    g.add_branch('FM(R1)', 'L', 'R')
+    g.add_branch('HM(VQ)', 'L', 'R')
     #~ g.add_branch('FM(IQ)', 'L', 'R')
 
     #~ tree = g.tree(['R1', 'R2', 'R4'])
-    tree = g.tree(['IQ', 'R1', 'R4'])
+    tree = g.tree(['VQ', 'R1', 'R4'])
 
     #~ tree = g.tree(['R1', 'Iq', 'R2'])
     #~ tree = g.tree(['R1', 'R2', 'R3'])
