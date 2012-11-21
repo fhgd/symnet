@@ -172,8 +172,6 @@ def loop_analysis(g, ctrl_src, tree):
     """Loop analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
-    ctrl_volts = []
-    ctrl_cur = []
     # loop equations of the cobranch voltages
     cobranches = g.branches() - tree.branches()
     for cobranch in cobranches:
@@ -184,12 +182,6 @@ def loop_analysis(g, ctrl_src, tree):
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
             vars.append(Calculus('I_'+cobranch))
-            if cobranch[0] in 'E':
-                ctrl_volts.append(ctrl_src[cobranch])
-        elif cobranch[0] in 'F':
-            ctrl_cur.append(ctrl_src[cobranch])
-        elif cobranch[0] in 'G':
-            ctrl_volts.append(ctrl_src[cobranch])
     # cut equations of the tree currents (for substitution or additional)
     tcur = {}
     for tb in tree.branches():
@@ -198,26 +190,19 @@ def loop_analysis(g, ctrl_src, tree):
         rhs_pos = [branch_current(b, ctrl_src) for b in bneg]
         rhs_neg = [branch_current(b, ctrl_src) for b in bpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
-        if tb[0] not in 'IFG' and tb not in ctrl_cur:
+        if tb[0] not in 'IFG': # and tb not in ctrl_cur:
             tcur[Calculus('I_'+tb)] = rhs
-            if tb[0] in 'E':
-                ctrl_volts.append(ctrl_src[tb])
-        elif tb[0] in 'IF':
+        else:
             eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
             vars.append(Calculus('V_'+tb))
-        elif tb[0] in 'G':
-            eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
-            vars.append(Calculus('V_'+tb))
-            ctrl_volts.append(ctrl_src[tb])
-    #~ print
-    #~ print vars
-    #~ print eqs
-    #~ print
-    #~ print tcur
-    #~ print
-    #~ print ctrl_cur
-    #~ print
-    # finally adding equations and variables of the control branches
+    # finally add equations and variables of the control branches
+    ctrl_volts = []
+    ctrl_cur = []
+    for src in ctrl_src:
+        if src[0] in 'EG':
+            ctrl_volts.append(ctrl_src[src])
+        if src[0] in 'F' and src in cobranches:
+            ctrl_cur.append(ctrl_src[src])
     # control currents
     for ctrl in ctrl_cur:
         i_ctrl = Calculus('I_'+ctrl)
@@ -237,7 +222,6 @@ def loop_analysis(g, ctrl_src, tree):
                 lhs_pos = [branch_current(b, ctrl_src) for b in bpos]
                 lhs_neg = [branch_current(b, ctrl_src) for b in bneg]
                 lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-                print lhs
             eqs.append(lhs)
     # control voltages
     for ctrl in ctrl_volts:
@@ -334,11 +318,8 @@ if __name__ == '__main__':
     g.add_branch('R4', 'R', '0')
     g.add_branch('GM', 'L', 'R')
 
-    ctrl_src = {'GM' : 'R1'}
-    tree = g.tree(['R1', 'GM', 'R4'])
-
-    ctrl_src = {'GM' : 'VQ'}
     tree = g.tree(['R1', 'VQ', 'R4'])
+    ctrl_src = {'GM' : 'R2'}
 
     #~ tree = g.tree(['R1', 'Iq', 'R2'])
     #~ tree = g.tree(['R1', 'R2', 'R3'])
