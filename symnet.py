@@ -118,29 +118,29 @@ class Graph(object):
 def f_u(brn, ctrl_src):
     """Return the voltage of branch brn"""
     type = brn[0]
-    if type == 'R':
+    if type == 'R':     # u = R i
         return brn+'*I_'+brn
-    elif type == 'H':
+    elif type == 'H':   # u = H i_ctrl
         return brn+'*'+branch_current(ctrl_src[brn], ctrl_src)
-    elif type == 'E':
+    elif type == 'E':   # u = E u_ctrl
         return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src)
-    elif type == 'V':
+    elif type == 'V':   # u = V
         return brn
-    else:
+    else:               # u = V_brn
         return 'V_'+brn
 
 def f_i(brn, ctrl_src):
     """Return the current of branch brn"""
     type = brn[0]
-    if type == 'R':
+    if type == 'R':     # i = G_R u
         return 'G_'+brn+'*V_'+brn
-    elif type == 'G':
+    elif type == 'G':   # i = G u_ctrl
         return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src)
-    elif type == 'F':
+    elif type == 'F':   # i = F i_ctrl
         return brn+'*'+branch_current(ctrl_src[brn], ctrl_src)
-    elif type == 'I':
+    elif type == 'I':   # i = I
         return brn
-    else:
+    else:               # i = I_brn
         return 'I_'+brn
 
 def branch_voltage(brn, ctrl_src):
