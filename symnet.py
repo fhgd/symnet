@@ -1,5 +1,29 @@
 # This Python file uses the following encoding: utf-8
 
+"""
+ToDo before release:
+
+* Test-Beispiele
+
+* Read netlist
+
+* Versuch: Zweigvariablen der Quellen erst später ersetzten
+    Gesteuerten Quellen zuerst wie unabhängige Quellen behandeln, dann
+    erst ersetzten...
+
+    Damit rekursive Struktur von branch_{current,voltage} und f_{i,u} entfernen
+
+* CleanUp
+
+* Fehlerausgabe bei create_matrices
+
+* Standardbaum der KSA (automatisch Leerläufe einfügen)
+
+* g.remove_branch
+
+* Lösen des lin. Gl.Sys. mit sympycore?
+"""
+
 from sympycore import Calculus
 
 class Graph(object):
