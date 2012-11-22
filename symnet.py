@@ -252,6 +252,7 @@ def loop_analysis(g, ctrl_src, tree):
     """Loop analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
+
     # loop equations of the cobranch voltages
     cobranches = g.branches() - tree.branches()
     for cobranch in cobranches:
@@ -262,6 +263,7 @@ def loop_analysis(g, ctrl_src, tree):
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
             vars.append(Calculus('I_'+cobranch))
+
     # cut equations of the tree currents (for substitution or additional)
     tcur = {}
     for tb in tree.branches():
@@ -277,10 +279,11 @@ def loop_analysis(g, ctrl_src, tree):
             vars.append(Calculus('V_'+tb))
 
     # finally add variables and equations of control voltages
+    eqs_cuts = []
     for src, ctrl in ctrl_src.items():
         if src[0] in 'EG':
             v_ctrl = Calculus('V_'+ctrl)
-            if v_ctrl not in vars:
+            if v_ctrl not in vars and ctrl[0] != 'V':
                 # control voltage is unknown
                 vars.append(v_ctrl)
                 # try if control voltage can be substituted (is a voltage source)
@@ -299,12 +302,21 @@ def loop_analysis(g, ctrl_src, tree):
                         lhs_neg = ['I_'+b for b in bneg]
                         lhs = Calculus(f_i(ctrl, ctrl_src)) + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
                 eqs.append(lhs)
-    print
-    print tcur
-    print
+        elif src[0] in 'F':
+            i_ctrl = 'I_'+ctrl
+            if i_ctrl not in vars and ctrl[0] != 'I' and ctrl in tree.branches():
+                # control current is unkown
+                vars.append(Calculus(i_ctrl))
+                # add cut equation for control branch
+                bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
+                lhs_pos = [branch_current(b, ctrl_src) for b in bpos]
+                lhs_neg = [branch_current(b, ctrl_src) for b in bneg]
+                lhs = Calculus('I_'+ctrl) + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                eqs_cuts.append(lhs)
 
     # substitute tree currents by cobranch currents
     eqs = [e.subs(tcur).expand() for e in eqs]
+    eqs.extend(eqs_cuts)
     return eqs, vars
 
 def create_matrices(eqs, vars):
