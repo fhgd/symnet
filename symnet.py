@@ -171,6 +171,7 @@ def cut_analysis(g, ctrl_src, tree):
     """Cut analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
+
     # cut equations of the tree currents
     for tb in tree.branches():
         if tb[0] not in 'VEH':
@@ -180,6 +181,7 @@ def cut_analysis(g, ctrl_src, tree):
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
             vars.append(Calculus('V_'+tb))
+
     # loop equations of the cobranch voltages
     cobranches = g.branches() - tree.branches()
     covolts = {}
@@ -194,57 +196,40 @@ def cut_analysis(g, ctrl_src, tree):
         else:
             eqs.append(Calculus(f_u(cobranch, ctrl_src)) - rhs)
             vars.append(Calculus('I_'+cobranch))
-    # finally add equations and variables of the control branches
-    ctrl_volts = []
-    ctrl_cur = []
-    for src in ctrl_src:
-        if src[0] in 'FH':
-            ctrl_cur.append(ctrl_src[src])
-        if src[0] in 'E' and src in tree.branches():
-            ctrl_volts.append(ctrl_src[src])
-    # control currents
-    for ctrl in ctrl_cur:
-        i_ctrl = Calculus('I_'+ctrl)
-        if ctrl[0] not in 'I' and i_ctrl not in vars:
-            # control current is unknown
-            vars.append(i_ctrl)
-            # try if control current can be substituted
-            lhs = i_ctrl - f_i(ctrl, ctrl_src)
-            if lhs == 0:
-                if ctrl in cobranches:
-                    # add loop equation for control voltage
-                    v_ctrl = Calculus('V_'+ctrl)
-                    lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
-                    lhs_pos = [branch_voltage(b, ctrl_src) for b in lpos]
-                    lhs_neg = [branch_voltage(b, ctrl_src) for b in lneg]
-                    lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-                else:
-                    # add cut equation for control branch
-                    bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                    lhs_pos = [f_i(b, ctrl_src) for b in bpos]
-                    lhs_neg = [f_i(b, ctrl_src) for b in bneg]
-                    lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-            eqs.append(lhs)
-    # control voltages
-    for ctrl in ctrl_volts:
-        v_ctrl = Calculus('V_'+ctrl)
-        if ctrl[0] not in 'V' and v_ctrl not in vars:
-            # control voltage is unknown
-            vars.append(v_ctrl)
-            if ctrl in cobranches:
-                # add loop equation for control voltage
-                lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
-                lhs_pos = [f_u(b) for b in lpos]
-                lhs_neg = [f_u(b) for b in lneg]
-                lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-            else:
-                # add cut equation for control branch
-                i_ctrl = Calculus('I_'+ctrl)
-                bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                lhs_pos = [branch_current(b, ctrl_src) for b in bpos]
-                lhs_neg = [branch_current(b, ctrl_src) for b in bneg]
-                lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-            eqs.append(lhs)
+
+    # finally add variables and equations of controlled sources
+    for src, ctrl in ctrl_src.items():
+        if src[0] in 'FH' and ctrl[0] != 'I':
+            i_ctrl = Calculus('I_'+ctrl)
+            if i_ctrl not in vars:      # ctrl is no 'VEH' in cotree
+                # control current is unknown
+                vars.append(i_ctrl)
+                # try if control current can be substituted
+                # then control branch is a (controlled) current source
+                lhs = i_ctrl - f_i(ctrl, ctrl_src)
+                if lhs == 0:
+                    # ctrl is a voltage source
+                    if ctrl in tree.branches():
+                        # add missing cut equation for i_ctrl which
+                        # was omitted due to: tb[0] not in 'VEH'
+                        bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
+                        lhs_pos = [f_i(b, ctrl_src) for b in bpos]
+                        lhs_neg = [f_i(b, ctrl_src) for b in bneg]
+                        lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                    # if i_ctrl is in cotree then var and loop equation are
+                    # already added because ctrl is a voltage source
+                eqs.append(lhs)
+        elif src[0] in 'E' and src in tree.branches():
+            if ctrl in cobranches and ctrl[0] not in 'VEH':
+                v_ctrl = Calculus('V_'+ctrl)
+                # just a test avoiding duplication
+                if v_ctrl not in vars:
+                    # control voltage is unknown
+                    vars.append(v_ctrl)
+                    # remove loop equation for ctrl from covolts and add to eqs
+                    eqs.append(v_ctrl - covolts.pop(v_ctrl))
+
+    # substitute cobranch voltages by tree voltages
     eqs = [e.subs(covolts).expand() for e in eqs]
     return eqs, vars
 
