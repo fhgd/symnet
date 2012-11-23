@@ -278,45 +278,40 @@ def loop_analysis(g, ctrl_src, tree):
             eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
             vars.append(Calculus('V_'+tb))
 
-    # finally add variables and equations of control voltages
-    eqs_cuts = []
+    # finally add variables and equations of controlled sources
     for src, ctrl in ctrl_src.items():
-        if src[0] in 'EG':
+        if src[0] in 'EG' and ctrl[0] != 'V':
             v_ctrl = Calculus('V_'+ctrl)
-            if v_ctrl not in vars and ctrl[0] != 'V':
+            if v_ctrl not in vars:      # ctrl is no 'IFG' in tree
                 # control voltage is unknown
                 vars.append(v_ctrl)
-                # try if control voltage can be substituted (is a voltage source)
+                # try if control voltage can be substituted
+                # then control branch is a (controlled) voltage source
                 lhs = v_ctrl - f_u(ctrl, ctrl_src)
                 if lhs == 0:
+                    # ctrl is a current source
                     if ctrl in cobranches:
-                        # add loop equation for control branch
+                        # add missing loop equation for v_ctrl which
+                        # was omitted due to: cobranch[0] not in 'IFG'
                         lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
                         lhs_pos = [f_u(b, ctrl_src) for b in lpos]
                         lhs_neg = [f_u(b, ctrl_src) for b in lneg]
-                        lhs = Calculus('V_'+ctrl) + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-                    else:
-                        # add cut equation for control branch
-                        bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                        lhs_pos = ['I_'+b for b in bpos]
-                        lhs_neg = ['I_'+b for b in bneg]
-                        lhs = Calculus(f_i(ctrl, ctrl_src)) + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                        lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                    # if v_ctrl is in tree then var and cut equation are
+                    # already added because ctrl is a current source
                 eqs.append(lhs)
-        elif src[0] in 'F':
-            i_ctrl = 'I_'+ctrl
-            if i_ctrl not in vars and ctrl[0] != 'I' and ctrl in tree.branches():
-                # control current is unkown
-                vars.append(Calculus(i_ctrl))
-                # add cut equation for control branch
-                bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                lhs_pos = [branch_current(b, ctrl_src) for b in bpos]
-                lhs_neg = [branch_current(b, ctrl_src) for b in bneg]
-                lhs = Calculus('I_'+ctrl) + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
-                eqs_cuts.append(lhs)
+        elif src[0] in 'F' and src in cobranches:
+            if ctrl in tree.branches() and ctrl[0] not in 'IFG':
+                i_ctrl = Calculus('I_'+ctrl)
+                # just a test avoiding duplication
+                if i_ctrl not in vars:
+                    # control current is unknown
+                    vars.append(i_ctrl)
+                    # remove cut equation for ctrl from tcur and add it to eqs
+                    eqs.append(i_ctrl - tcur.pop(i_ctrl))
 
     # substitute tree currents by cobranch currents
     eqs = [e.subs(tcur).expand() for e in eqs]
-    eqs.extend(eqs_cuts)
     return eqs, vars
 
 def create_matrices(eqs, vars):
@@ -375,7 +370,6 @@ u = H(i)
              u = f_u(i) ersetzen und dann I_branch und i durch Cobaumströme
              ersetzen.
 """
-
 
 if __name__ == '__main__':
     from sympycore import Matrix
