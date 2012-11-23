@@ -3,7 +3,12 @@
 """
 ToDo before release:
 
-* Test-Beispiele
+* Versuch: Beim Einsetzen der gesteuerten Quellen doch wieder rekursiv die
+           Steuergrößen mit ersetzten (wenn möglich).
+
+  Damit könnte man vielleicht die Trivialgleichungen reduzieren.
+
+* Beispiele
 
 * Read netlist
 
