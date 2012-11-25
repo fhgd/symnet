@@ -263,7 +263,7 @@ def loop_analysis(g, ctrl_src, tree):
         rhs_neg = [branch_current(b, ctrl_src) for b in bpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if tb[0] not in 'IFG':
-            tcur[Calculus('I_'+tb)] = rhs
+            tcur[Calculus('I_'+tb)] = rhs.expand()
         else:
             eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
             vars.append(Calculus('V_'+tb))
