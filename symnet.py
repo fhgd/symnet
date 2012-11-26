@@ -3,14 +3,11 @@
 """
 ToDo before release:
 
-* Versuch: Beim Einsetzen der gesteuerten Quellen doch wieder rekursiv die
-           Steuergrößen mit ersetzten (wenn möglich).
-
-  Damit könnte man vielleicht die Trivialgleichungen reduzieren.
+* Standardbaum der KSA (automatisch Leerläufe einfügen)
 
 * Beispiele
 
-* Read netlist
+* Trivialgleichungen wenn möglich reduzieren
 
 * Versuch: Zweigvariablen der Quellen erst später ersetzten
     Gesteuerten Quellen zuerst wie unabhängige Quellen behandeln, dann
@@ -19,12 +16,6 @@ ToDo before release:
     Damit rekursive Struktur von branch_{current,voltage} und f_{i,u} entfernen
 
 * CleanUp
-
-* Fehlerausgabe bei create_matrices
-
-* Standardbaum der KSA (automatisch Leerläufe einfügen)
-
-* g.remove_branch
 
 * Lösen des lin. Gl.Sys. mit sympycore?
 """
