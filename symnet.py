@@ -56,6 +56,29 @@ class Graph(object):
             self.branches_out[n1] = set()
         self.branches_out[n1].add(branch)
 
+    def pop_branch(self, branch):
+        """Remove branch from graph and return branch nodes"""
+        n1, n2 = self.inc.pop(branch)
+        self.branches_in[n2].remove(branch)
+        if not self.branches_in[n2]:
+            del self.branches_in[n2]
+        self.branches_out[n1].remove(branch)
+        if not self.branches_out[n1]:
+            del self.branches_out[n1]
+        return n1, n2
+
+    def remove_branch(self, branch):
+        """Remove branch from the graph"""
+        self.pop_branch(branch)
+
+    def replace_branch(self, old, new):
+        """Replace old branch by new branch"""
+        try:
+            nodes = self.pop_branch(old)
+            self.add_branch(new, *nodes)
+        except KeyError:
+            pass
+
     def nodes(self, branch=None):
         """Return the two nodes of branch or all nodes of the graph"""
         if branch:
