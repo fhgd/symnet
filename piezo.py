@@ -18,14 +18,14 @@ Gesteuerte Quellen:
     u = E(u)    i = F(i)    i = G(u)    u = H(i)
 """
 
-g = Graph()
-g.add_branch('RM', '0', '1')
-g.add_branch('EM', '1', '0')
-g.add_branch('RP', '2', '0')
-g.add_branch('FP', '0', '2')
-g.add_branch('SRC', '0', '2')
+gsrc = Graph()
+gsrc.add_branch('RM', '0', '1')
+gsrc.add_branch('EM', '1', '0')
+gsrc.add_branch('RP', '2', '0')
+gsrc.add_branch('FP', '0', '2')
+gsrc.add_branch('SRC', '0', '2')
 ctrl_src = {'EM': 'RP', 'FP': 'RM'}
-trees = [g.tree(tree_branches) for tree_branches in
+trees = [gsrc.tree(tree_branches) for tree_branches in
     ('RM', 'FP'),
     ('RM', 'RP'),
     ('RM', 'SRC'),
@@ -33,11 +33,12 @@ trees = [g.tree(tree_branches) for tree_branches in
     ('EM', 'RP'),
     ('EM', 'SRC'),
 ]
-old_src = 'SRC'
 for src in 'IQ', 'VQ':
-    g.replace_branch(old_src, src)
-    for tree in trees:
-        tree.replace_branch(old_src, src)
+    g = Graph(gsrc.inc)
+    g.replace_branch('SRC', src)
+    for tr in trees:
+        tree = Graph(tr.inc)
+        tree.replace_branch('SRC', src)
         treebrns = tree.branches()
         cobrns = g.branches() - treebrns
         for analysis in cut_analysis, loop_analysis:
@@ -50,4 +51,3 @@ for src in 'IQ', 'VQ':
             print '* Baum', treebrns, ',  Ctrls', ctrl_src, ',  Cobaum', cobrns
             print lines
             print
-    old_src = src
