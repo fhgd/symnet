@@ -32,18 +32,21 @@ ToDo before release:
 from sympycore import Calculus
 
 class Graph(object):
-    def __init__(self, name=''):
-        """The graph contain branches between nodes"""
-        self.node_in = {}
-        self.node_out = {}
+    def __init__(self, incidence={}, name=''):
+        """The graph is given by a incidence relation {branch: (n1, n2)}"""
         self.branches_in = {}
         self.branches_out = {}
+        self.inc = {}
+        for branch, nodes in incidence.items():
+            self.add_branch(branch, *nodes)
         self.name = name
 
+    def __repr__(self):
+        return 'Graph(%s)' % repr(self.inc)
+
     def add_branch(self, branch, n1, n2):
-        """Add a new branch to the graph"""
-        self.node_in[branch] = n1
-        self.node_out[branch] = n2
+        """Add a new branch from node n1 to node n2 to the graph"""
+        self.inc[branch] = n1, n2
 
         if n2 not in self.branches_in:
             self.branches_in[n2] = set()
@@ -56,7 +59,7 @@ class Graph(object):
     def nodes(self, branch=None):
         """Return the two nodes of branch or all nodes of the graph"""
         if branch:
-            return self.node_in[branch], self.node_out[branch]
+            return self.inc[branch]
         else:
             return set(self.branches_in) | set(self.branches_out)
 
@@ -65,7 +68,15 @@ class Graph(object):
         if node:
             return self.branches_in.get(node, set()) | self.branches_out.get(node, set())
         else:
-            return set(self.node_in) | set(self.node_out)
+            return set(self.inc) | set(self.inc)    # preserve old order
+
+    def node_in(self, branch):
+        """Return the first node of branch"""
+        return self.inc[branch][0]
+
+    def node_out(self, branch):
+        """Return the second node of branch"""
+        return self.inc[branch][1]
 
     def tree(self, branches):
         """Return the graph of branches if branches are a tree"""
@@ -95,7 +106,7 @@ class Graph(object):
         """Return all branches from the cut with the tree branch tb"""
         bin = set()
         bout = set()
-        for node in tree._neighbors(tb, tree.node_in[tb]):
+        for node in tree._neighbors(tb, tree.node_in(tb)):
             bin.update(self.branches_in.get(node, set()))
             bout.update(self.branches_out.get(node, set()))
         if not include_tree_branch:
