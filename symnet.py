@@ -350,6 +350,24 @@ def create_matrices(eqs, vars):
         b.append(-eq.subs(vars_zero))
     return A, b
 
+def parse_netlist(netlist=''):
+    """Return graph and controlled sources dictionary of netlist"""
+    import pyparsing as parse
+    COMMENT = "*" + parse.Optional(parse.restOfLine)
+    NAME = parse.Word(parse.alphanums+"_")
+    TYPE = parse.oneOf('R V I E F G H', caseless=True)
+    ELEMENT = parse.Combine(TYPE+NAME)
+    LINE = ELEMENT + NAME + NAME  + parse.Optional(~parse.LineEnd() + NAME)
+    NETLIST = parse.Dict(parse.ZeroOrMore(parse.Group(LINE)))
+    NETLIST.ignore(COMMENT)
+    graph = {}
+    ctrl_src = {}
+    for brn, vals in NETLIST.parseString(netlist).items():
+        graph[brn] = vals[:2]
+        if brn[0] in 'EFH':
+            ctrl_src[brn] = vals[2]
+    return graph, ctrl_src
+
 """
 Idee zu den Zweigen:
     Statt Strings könnten die Zweige auch eigene Objekte sein (Unterklasse
