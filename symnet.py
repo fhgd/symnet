@@ -145,69 +145,79 @@ class Graph(object):
             lpos.add(cb)
         return lpos, lneg
 
-def f_u(brn, ctrl_src):
+def btype(brn, types):
+    return types.get(brn, brn[0])
+
+def bindex(brn, types):
+    if brn in types:
+        return brn
+        return '_'+brn
+    else:
+        return brn[1:]
+
+def f_u(brn, ctrl_src, types):
     """Return the voltage of branch brn"""
-    type = brn[0]
+    type = btype(brn, types)
     if type == 'R':     # u = R i
         return brn+'*I_'+brn
     elif type == 'H':   # u = H i_ctrl
-        return brn+'*'+branch_current(ctrl_src[brn], ctrl_src)
+        return brn+'*'+branch_current(ctrl_src[brn], ctrl_src, types)
     elif type == 'E':   # u = E u_ctrl
-        return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src)
+        return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src, types)
     elif type == 'V':   # u = V
-        return brn
+        return 'V'+bindex(brn, types)
     else:               # u = V_brn
         return 'V_'+brn
 
-def f_i(brn, ctrl_src):
+def f_i(brn, ctrl_src, types):
     """Return the current of branch brn"""
-    type = brn[0]
+    type = btype(brn, types)
     if type == 'R':     # i = G_R u
         return 'G_'+brn+'*V_'+brn
     elif type == 'G':   # i = G u_ctrl
-        return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src)
+        return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src, types)
     elif type == 'F':   # i = F i_ctrl
-        return brn+'*'+branch_current(ctrl_src[brn], ctrl_src)
+        return brn+'*'+branch_current(ctrl_src[brn], ctrl_src, types)
     elif type == 'I':   # i = I
-        return brn
+        return 'I'+bindex(brn, types)
     else:               # i = I_brn
         return 'I_'+brn
 
-def branch_voltage(brn, ctrl_src):
+def branch_voltage(brn, ctrl_src, types):
     """Return the branch voltage symbol"""
-    type = brn[0]
+    type = btype(brn, types)
     if type in 'V':
-        return brn
+        return 'V'+bindex(brn, types)
     elif type in 'E':
-        return f_u(brn, ctrl_src)
+        return f_u(brn, ctrl_src, types)
     elif type in 'H':
-        return f_u(brn, ctrl_src)
+        return f_u(brn, ctrl_src, types)
     else:
         return 'V_'+brn
 
-def branch_current(brn, ctrl_src):
+def branch_current(brn, ctrl_src, types):
     """Return the branch current symbol"""
-    type = brn[0]
+    type = btype(brn, types)
     if type in 'I':
-        return brn
+        return 'I'+bindex(brn, types)
     elif type in 'F':
-        return f_i(brn, ctrl_src)
+        return f_i(brn, ctrl_src, types)
     elif type in 'G':
-        return f_i(brn, ctrl_src)
+        return f_i(brn, ctrl_src, types)
     else:
         return 'I_'+brn
 
-def cut_analysis(g, ctrl_src, tree):
+def cut_analysis(g, ctrl_src, tree, types={}):
     """Cut analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
 
     # cut equations of the tree currents
     for tb in tree.branches():
-        if tb[0] not in 'VEH':
+        if btype(tb, types) not in 'VEH':
             bpos, bneg = g.cut(tb, tree)
-            lhs_pos = [f_i(b, ctrl_src) for b in bpos]
-            lhs_neg = [f_i(b, ctrl_src) for b in bneg]
+            lhs_pos = [f_i(b, ctrl_src, types) for b in bpos]
+            lhs_neg = [f_i(b, ctrl_src, types) for b in bneg]
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
             vars.append(Calculus('V_'+tb))
@@ -218,39 +228,39 @@ def cut_analysis(g, ctrl_src, tree):
     for cobranch in cobranches:
         lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = [branch_voltage(b, ctrl_src) for b in lneg]
-        rhs_neg = [branch_voltage(b, ctrl_src) for b in lpos]
+        rhs_pos = [branch_voltage(b, ctrl_src, types) for b in lneg]
+        rhs_neg = [branch_voltage(b, ctrl_src, types) for b in lpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
-        if cobranch[0] not in 'VEH':
+        if btype(cobranch, types) not in 'VEH':
             covolts[Calculus('V_'+cobranch)] = rhs
         else:
-            eqs.append(Calculus(f_u(cobranch, ctrl_src)) - rhs)
+            eqs.append(Calculus(f_u(cobranch, ctrl_src, types)) - rhs)
             vars.append(Calculus('I_'+cobranch))
 
     # finally add variables and equations of controlled sources
     for src, ctrl in ctrl_src.items():
-        if src[0] in 'FH' and ctrl[0] != 'I':
+        if btype(src, types) in 'FH' and btype(ctrl, types) != 'I':
             i_ctrl = Calculus('I_'+ctrl)
             if i_ctrl not in vars:      # ctrl is no 'VEH' in cotree
                 # control current is unknown
                 vars.append(i_ctrl)
                 # try if control current can be substituted
                 # then control branch is a (controlled) current source
-                lhs = i_ctrl - f_i(ctrl, ctrl_src)
+                lhs = i_ctrl - f_i(ctrl, ctrl_src, types)
                 if lhs == 0:
                     # ctrl is a voltage source
                     if ctrl in tree.branches():
                         # add missing cut equation for i_ctrl which
-                        # was omitted due to: tb[0] not in 'VEH'
+                        # was omitted due to: btype(tb, types) not in 'VEH'
                         bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                        lhs_pos = [f_i(b, ctrl_src) for b in bpos]
-                        lhs_neg = [f_i(b, ctrl_src) for b in bneg]
+                        lhs_pos = [f_i(b, ctrl_src, types) for b in bpos]
+                        lhs_neg = [f_i(b, ctrl_src, types) for b in bneg]
                         lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
                     # if i_ctrl is in cotree then var and loop equation are
                     # already added because ctrl is a voltage source
                 eqs.append(lhs)
-        elif src[0] in 'E' and src in tree.branches():
-            if ctrl in cobranches and ctrl[0] not in 'VEH':
+        elif btype(src, types) in 'E' and src in tree.branches():
+            if ctrl in cobranches and btype(ctrl, types) not in 'VEH':
                 v_ctrl = Calculus('V_'+ctrl)
                 # just a test avoiding duplication
                 if v_ctrl not in vars:
@@ -263,7 +273,7 @@ def cut_analysis(g, ctrl_src, tree):
     eqs = [e.subs(covolts).expand() for e in eqs]
     return eqs, vars
 
-def loop_analysis(g, ctrl_src, tree):
+def loop_analysis(g, ctrl_src, tree, types={}):
     """Loop analysis respect to the tree of the network graph g"""
     eqs = []
     vars = []
@@ -271,10 +281,10 @@ def loop_analysis(g, ctrl_src, tree):
     # loop equations of the cobranch voltages
     cobranches = g.branches() - tree.branches()
     for cobranch in cobranches:
-        if cobranch[0] not in 'IFG':
+        if btype(cobranch, types) not in 'IFG':
             lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
-            lhs_pos = [f_u(b, ctrl_src) for b in lpos]
-            lhs_neg = [f_u(b, ctrl_src) for b in lneg]
+            lhs_pos = [f_u(b, ctrl_src, types) for b in lpos]
+            lhs_neg = [f_u(b, ctrl_src, types) for b in lneg]
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
             vars.append(Calculus('I_'+cobranch))
@@ -284,39 +294,39 @@ def loop_analysis(g, ctrl_src, tree):
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = [branch_current(b, ctrl_src) for b in bneg]
-        rhs_neg = [branch_current(b, ctrl_src) for b in bpos]
+        rhs_pos = [branch_current(b, ctrl_src, types) for b in bneg]
+        rhs_neg = [branch_current(b, ctrl_src, types) for b in bpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
-        if tb[0] not in 'IFG':
+        if btype(tb, types) not in 'IFG':
             tcur[Calculus('I_'+tb)] = rhs.expand()
         else:
-            eqs.append(Calculus(f_i(tb, ctrl_src)) - rhs)
+            eqs.append(Calculus(f_i(tb, ctrl_src, types)) - rhs)
             vars.append(Calculus('V_'+tb))
 
     # finally add variables and equations of controlled sources
     for src, ctrl in ctrl_src.items():
-        if src[0] in 'EG' and ctrl[0] != 'V':
+        if btype(src, types) in 'EG' and btype(ctrl, types) != 'V':
             v_ctrl = Calculus('V_'+ctrl)
             if v_ctrl not in vars:      # ctrl is no 'IFG' in tree
                 # control voltage is unknown
                 vars.append(v_ctrl)
                 # try if control voltage can be substituted
                 # then control branch is a (controlled) voltage source
-                lhs = v_ctrl - f_u(ctrl, ctrl_src)
+                lhs = v_ctrl - f_u(ctrl, ctrl_src, types)
                 if lhs == 0:
                     # ctrl is a current source
                     if ctrl in cobranches:
                         # add missing loop equation for v_ctrl which
-                        # was omitted due to: cobranch[0] not in 'IFG'
+                        # was omitted due to: btype(cobranch, types) not in 'IFG'
                         lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
-                        lhs_pos = [f_u(b, ctrl_src) for b in lpos]
-                        lhs_neg = [f_u(b, ctrl_src) for b in lneg]
+                        lhs_pos = [f_u(b, ctrl_src, types) for b in lpos]
+                        lhs_neg = [f_u(b, ctrl_src, types) for b in lneg]
                         lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
                     # if v_ctrl is in tree then var and cut equation are
                     # already added because ctrl is a current source
                 eqs.append(lhs)
-        elif src[0] in 'F' and src in cobranches:
-            if ctrl in tree.branches() and ctrl[0] not in 'IFG':
+        elif btype(src, types) in 'F' and src in cobranches:
+            if ctrl in tree.branches() and btype(ctrl, types) not in 'IFG':
                 i_ctrl = Calculus('I_'+ctrl)
                 # just a test avoiding duplication
                 if i_ctrl not in vars:
@@ -355,7 +365,7 @@ def parse_netlist(netlist=''):
     ctrl_src = {}
     for brn, vals in NETLIST.parseString(netlist).items():
         graph[brn] = vals[:2]
-        if brn[0] in 'EFH':
+        if btype(brn, types) in 'EFH':
             ctrl_src[brn] = vals[2]
     return graph, ctrl_src
 
