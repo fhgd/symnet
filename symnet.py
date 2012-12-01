@@ -374,6 +374,14 @@ Idee zu den Zweigen:
 
     Klasse muss aber *immutable* sein!
 
+    Nicht so gut, da somit der Typ eines Zweiges nich einfach geändert
+    werden kann. Besser sind dicts:
+
+        type = types[branch]
+        ctrl = ctrls[branch]
+
+Diese beiden dicts zusammen mit dem Graphen als Netzwerk Klasse?!
+
 Gesteuerte Quellen:
 
     Alternative zur extra Klasse: steuernder Zweig mit im Namen angeben,
