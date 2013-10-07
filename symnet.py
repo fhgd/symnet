@@ -420,6 +420,25 @@ u = H(i)
         I(u) Schnittgleichung I_branch - I(u) = 0 aufstellen, die Steuerspannung
              u = f_u(i) ersetzen und dann I_branch und i durch Cobaumströme
              ersetzen.
+
+Nullator:
+
+    Schnittanalyse:
+        Wenn Nullator im Baum, dann keine Schnittgleichung aufstellen (v = 0)
+                     ... Cobaum, dann liefert f_i = 0.
+
+        Maschengleichung:
+            Wenn Nullator im Cobaum, dann liefert f_u = 0 und I_cobranch NICHT
+            an vars anhaengen, da wegen f_i = 0 nicht benoetigt!
+
+            Wenn Nullator im Baum, dann liefert branch_voltage = 0.
+
+Norator:
+
+    Es sollte keine Extrabehandlung notwenig sein, da von f_u,i und
+    branch_voltage,current bereits abgedeckt: 'I_'+brn und 'V_'+brn
+
+    An geeigneter Stelle noch: vars.append(v_norator, i_norator)
 """
 
 if __name__ == '__main__':
