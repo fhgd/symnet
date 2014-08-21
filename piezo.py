@@ -6,13 +6,14 @@ from symnet import *
 
 """
 Modell Piezogenerator:
-         1     2
-    +----+     +----+----+
-    A    V     A    |    |
-    RM   EM    FP   RP   IQ oder VQ
-    |    |     |    |    |
-    +----+-----+----+----+
-            0
+
+                       (1)              (2)
+    ,-- R -- IL -- VC --,      ,----+----+----o----.
+   +|        +-    +-  +|     -|   +|    |        +|
+    V0                  EM     FP   VCp  Rp        V1
+   -|                  -|     +|   -|    |        -|
+    '-------------------+------+----+----+----o----'
+                       (0)
 
 Gesteuerte Quellen:
     u = E(u)    i = F(i)    i = G(u)    u = H(i)
