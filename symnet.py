@@ -270,7 +270,7 @@ def cut_analysis(g, ctrl_src, tree, types={}):
                     eqs.append(v_ctrl - covolts.pop(v_ctrl))
 
     # substitute cobranch voltages by tree voltages
-    eqs = [e.subs(covolts).expand() for e in eqs]
+    eqs = [e.subs(covolts).normal().expand() for e in eqs]
     return eqs, vars
 
 def loop_analysis(g, ctrl_src, tree, types={}):
