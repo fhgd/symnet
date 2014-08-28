@@ -10,7 +10,7 @@ Circuit:
    +|     |    X                    |     |
     +-----+-----+-- Rin --+ 1       RS    C2
    +|     |     |        +|         |     |
-    Gm2   Rds1  C1        Vin       |     |
+    Gm2   Rds2  C1        Vin       |     |
    -|     |     |        -|         |     |
     +-----+-----+---------+---------+-----+
           0
@@ -19,22 +19,22 @@ Controlled Sources:
     u = E(u)    i = F(i)    i = G(u)    u = H(i)
 """
 
-g = Graph()
-g.add_branch('Vin',  '1', '0')
-g.add_branch('Rin',  '1', 'X')
-g.add_branch('RC1',  'X', '0')
-g.add_branch('Rds2', 'X', '0')
-g.add_branch('Gm2',  'X', '0')
-g.add_branch('Gm1',  'X', 'OUT')
-g.add_branch('Rds1', 'X', 'OUT')
-g.add_branch('RS',   'OUT', '0')
-g.add_branch('RC2',  'OUT', '0')
-ctrl_src = {'Gm2': 'RC2', 'Gm1':'RC1'}
+netlist = """
+Vin     1   0
+Rin     1   X
+
+RC1     X   0
+Rds2    X   0
+Gm2     X   0   RC2
+
+Gm1     X   OUT RC1
+Rds1    X   OUT
+
+RS      OUT 0
+RC2     OUT 0
+"""
+g, ctrl_src = parse_netlist(netlist)
 tree = g.tree(['Rds2', 'Vin', 'RC2'])
-
-#g.add_branch('Vin', '0', '1')
-#tree = g.tree(['Rin', 'R1'])
-
 
 eqs, vars = cut_analysis(g, ctrl_src, tree)
 A, b = create_matrices(eqs, vars)
@@ -56,6 +56,8 @@ lines = ['  %s  =  %s' % (xk, rk.strip()) for xk, rk in zip(vars, x_str)]
 lines = '\n\n'.join(lines)
 print
 print lines
+print
+print 'Vout := zout/nout := V_RC2'
 print
 
 Vout = x[1,0].subs({'G_RC1':'s*C1', 'G_RC2':'s*C2'})
