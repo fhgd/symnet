@@ -377,7 +377,7 @@ def create_matrices(eqs, vars):
         b.append(-eq.subs(vars_zero))
     return A, b
 
-def parse_netlist(netlist=''):
+def parse_netlist(netlist='', types={}):
     """Return graph and controlled sources dictionary of netlist"""
     import pyparsing as parse
     COMMENT = "*" + parse.Optional(parse.restOfLine)
@@ -391,9 +391,9 @@ def parse_netlist(netlist=''):
     ctrl_src = {}
     for brn, vals in NETLIST.parseString(netlist).items():
         graph[brn] = vals[:2]
-        if btype(brn, types) in 'EFH':
+        if btype(brn, types) in 'EFGH':
             ctrl_src[brn] = vals[2]
-    return graph, ctrl_src
+    return Graph(graph), ctrl_src
 
 """
 Idee zu den Zweigen:
