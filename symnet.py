@@ -1,7 +1,33 @@
 # This Python file uses the following encoding: utf-8
 
 """
-ToDo before release:
+==== Vorschlag von Daniel Schillinger:
+
+* symnet nur (zunaechst) nur zum Aufstellen des (nichtlin.) GlSys. verwenden
+
+(2.) Einlesen aus Netzliste
+    Netzliste von: LTSpice, Qucs, SpicyVoltSim, CircuitLabs
+    Frage: Wie mit gesteuerten Quellen umgehen?
+        Steuergröße kann nicht nur ein anderer Zweig, sondern allgemein auch
+        ein Leerlauf oder Kurzschluss sein
+        (beim Einlesen einer (Spice-) Netzliste automatisch einfuegen)
+
+(3.) Transistor als 3-Pol unterstuetzen und als einfaches Model ersetzen
+
+(1.) Standardbaum der KSA
+    automatisch Leerläufe einfügen, um die gewoehnlichen Knotenspannungen
+    zu erhalten
+
+* Gleichungen von Mathematica lösen lassen (Copy-Paste)
+
+* Eigene grafische Eingabe
+    ipython Notebook? 
+    Darstellung des Netzwerkes zunaechst mit 
+        - graphviz: pygraphviz, pydot
+        - networkx (Node positioning algorithms) und matplotlib
+
+
+==== ToDo before release:
 
 * Standardbaum der KSA (automatisch Leerläufe einfügen)
 
