@@ -1,9 +1,0 @@
-* messure brücke
-
-V1 A 0
-G1 A L
-G2 L 0
-G3 A R
-G4 R 0
-Gm L R
-
