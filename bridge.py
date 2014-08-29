@@ -30,50 +30,24 @@ g, ctrl_src = parse_netlist("""
 """)
 tree = g.tree(['V1', 'R2', 'R4'])
 
-eqs, vars = cut_analysis(g, ctrl_src, tree)
-A, b = create_matrices(eqs, vars)
-# pretty print of the matrix equation
-eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
-lines = ['  [%s] [%s]   =  %s' % (e, v, r) for e, v, r in zip(*eqs_str)]
-lines = '\n'.join(lines)
+eqs, x = cut_analysis(g, ctrl_src, tree)
+A, b = create_matrices(eqs, x)
+eqstr = pprint_linear(A, x, b)
+
 treebrns = tree.branches()
 cobrns = g.branches() - treebrns
+
 print '* Baum', treebrns, ',  Ctrls', ctrl_src, ',  Cobaum', cobrns
 print
-print lines
-
-A = Matrix(A)
-b = Matrix(b)
-det = A.det().expand()
-
-idx = vars.index('V_R2')    # position of desired variable in vars
-_A = Matrix(A)
-_A[:, idx] = b      # put the rhs vector into the idx-column of the lhs matrix
-src = 'V1'
-det_idx = _A.det().expand().subs(src, 1) * src
-
+print eqstr
 print
-print det_idx
-print '-' * max(len(str(det_idx)), len(str(det)))
-print det
 
-if 0:
-    A = Matrix(A)
-    b = Matrix(b)
-    x = A.solve(b)
-    x_str = str(x).split('\n')
-    lines = ['  %s  =  %s' % (xk, rk.strip()) for xk, rk in zip(vars, x_str)]
-    lines = '\n\n'.join(lines)
-    print
-    print lines
-    print
-    print 'Vout := zout/nout := V_RC2'
-    print
+num, denom = solve_linear(Matrix(A), x, Matrix(b), 'V_R2')
+num = num.subs('V1', 1) * 'V1'  # factor out constant voltage source
 
-    Vout = x[1,0].subs({'G_RC1':'s*C1', 'G_RC2':'s*C2'})
-    zout, nout = Vout.as_numer_denom()
-
-    print 'zout =', zout
-    print
-    print 'nout =', nout
+num = str(num).replace('G_R', 'G')
+denom = str(denom).replace('G_R', 'G')
+print num
+print '-' * max(len(str(num)), len(str(denom)))
+print denom
 

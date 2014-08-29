@@ -1,4 +1,4 @@
-from sympycore import Calculus
+from sympycore import Calculus, Matrix
 import pyparsing as parse
 
 class Graph(object):
@@ -329,6 +329,22 @@ def create_matrices(eqs, vars):
         A.append(line)
         b.append(-eq.subs(vars_zero))
     return A, b
+
+def pprint_linear(A, x, b):
+    """pretty print of the matrix equation Ax = b"""
+    eqs_str = [str(Matrix(M)).split('\n') for M in A, x, b]
+    lines = ['  [%s] [%s]   =  %s' % (e, v, r) for e, v, r in zip(*eqs_str)]
+    lines = '\n'.join(lines)
+    return lines
+
+def solve_linear(A, x, b, var):
+    """Solve linear system Ax = b for variable var in x using Cramer's rule"""
+    idx = x.index(var)  # position of desired variable in vars
+    _A = A * 1          # coppy of A
+    _A[:, idx] = b      # put the rhs vector into the idx-column of the lhs matrix
+    numerator = _A.det().expand()
+    denominator = A.det().expand()
+    return numerator, denominator
 
 def parse_netlist(netlist='', types={}):
     """Return graph and controlled sources dictionary of netlist"""

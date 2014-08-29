@@ -36,34 +36,25 @@ RC2     OUT 0
 g, ctrl_src = parse_netlist(netlist)
 tree = g.tree(['Rds2', 'Vin', 'RC2'])
 
-eqs, vars = cut_analysis(g, ctrl_src, tree)
-A, b = create_matrices(eqs, vars)
-# pretty print of the matrix equation
-eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
-lines = ['  [%s] [%s]   =  %s' % (e, v, r) for e, v, r in zip(*eqs_str)]
-lines = '\n'.join(lines)
+eqs, x = cut_analysis(g, ctrl_src, tree)
+A, b = create_matrices(eqs, x)
+eqstr = pprint_linear(A, x, b)
+
 treebrns = tree.branches()
 cobrns = g.branches() - treebrns
+
 print '* Baum', treebrns, ',  Ctrls', ctrl_src, ',  Cobaum', cobrns
 print
-print lines
-
-A = Matrix(A)
-b = Matrix(b)
-x = A.solve(b)
-x_str = str(x).split('\n')
-lines = ['  %s  =  %s' % (xk, rk.strip()) for xk, rk in zip(vars, x_str)]
-lines = '\n\n'.join(lines)
-print
-print lines
-print
-print 'Vout := zout/nout := V_RC2'
+print eqstr
 print
 
-Vout = x[1,0].subs({'G_RC1':'s*C1', 'G_RC2':'s*C2'})
-zout, nout = Vout.as_numer_denom()
+num, denom = solve_linear(Matrix(A), x, Matrix(b), 'V_RC2')
+num = num.subs('Vin', 1) * 'Vin'  # factor out constant voltage source
+subs = {'G_RC1':'s*C1', 'G_RC2':'s*C2'}
 
-print 'zout =', zout
+print 'Vout := num/denom := V_RC2'
 print
-print 'nout =', nout
+print 'num   =', num.subs(subs)
+print
+print 'denom =', denom.subs(subs)
 
