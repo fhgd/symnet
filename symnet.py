@@ -465,64 +465,10 @@ Norator:
     branch_voltage,current bereits abgedeckt: 'I_'+brn und 'V_'+brn
 
     An geeigneter Stelle noch: vars.append(v_norator, i_norator)
-"""
 
-if __name__ == '__main__':
-    from sympycore import Matrix
 
-    g = Graph()
-    g.add_branch('VQ', 'A', '0')
-    g.add_branch('R1', 'A', 'L')
-    g.add_branch('R2', 'L', '0')
-    g.add_branch('R3', 'A', 'R')
-    g.add_branch('R4', 'R', '0')
-    g.add_branch('FM', 'L', 'R')
+==== Old Docs
 
-    tree = g.tree(['R1', 'R2', 'R4'])
-    ctrl_src = {'FM' : 'R4'}
-
-    #~ tree = g.tree(['R1', 'Iq', 'R2'])
-    #~ tree = g.tree(['R1', 'R2', 'R3'])
-    #~ tree = g.tree(['V1', 'Rm', 'R4'])
-    #~ tree = g.tree(['V1', 'R2', 'R4'])
-
-    print '* Maschen der Nichtbaumzweige:'
-    for cobranch in g.branches() - tree.branches():
-        lpos, lneg = g.loop(cobranch, tree)
-        # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = ' + '.join(['V_'+b for b in lneg])
-        rhs_neg = ''.join([' - V_'+b for b in lpos])
-        print 'V_'+cobranch, '=', rhs_pos+rhs_neg
-    print '* Schnitte der Baumzweige:'
-    for tb in tree.branches():
-        bpos, bneg = g.cut(tb, tree)
-        lhs_pos = ' + '.join(['I_'+b for b in bpos])
-        lhs_neg = ''.join([' - I_'+b for b in bneg])
-        print tb, ':', lhs_pos+lhs_neg, '= 0'
-    print '* Schnittanalyse:'
-    eqs, vars = cut_analysis(g, ctrl_src, tree)
-    A, b = create_matrices(eqs, vars)
-    # pretty print of the matrix equation
-    eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
-    for e, v, r in zip(*eqs_str):
-        print '[%s] [%s]   =  %s' % (e, v, r)
-    if len(eqs) > len(vars):
-        print '\n!!! Zuwenig Unbekannte !!!'
-    if len(eqs) < len(vars):
-        print '\n!!! Zuwenig Gleichungen !!!'
-    print '* Maschenanalyse:'
-    eqs, vars = loop_analysis(g, ctrl_src, tree)
-    A, b = create_matrices(eqs, vars)
-    # pretty print of the matrix equation
-    eqs_str = [str(Matrix(M)).split('\n') for M in A, vars, b]
-    for e, v, r in zip(*eqs_str):
-        print '[%s] [%s]   =  %s' % (e, v, r)
-    if len(eqs) > len(vars):
-        print '\n!!! Zuwenig Unbekannte !!!'
-    if len(eqs) < len(vars):
-        print '\n!!! Zuwenig Gleichungen !!!'
-
-"""
 Literatur:
 
 * Symbolic Circuit Analysis:  http://rodanski.net/ben/work/symbolic/index.htm
