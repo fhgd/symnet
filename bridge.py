@@ -29,8 +29,9 @@ g, ctrl_src = parse_netlist("""
     Rm  L   R
 """)
 tree = g.tree(['V1', 'R2', 'R4'])
-
 eqs, x = cut_analysis(g, ctrl_src, tree)
+eqs, x, tree = mna(g, ctrl_src)
+
 A, b = create_matrices(eqs, x)
 eqstr = pprint_linear(A, x, b)
 
@@ -42,7 +43,7 @@ print
 print eqstr
 print
 
-num, denom = solve_linear(Matrix(A), x, Matrix(b), 'V_R2')
+num, denom = solve_linear(Matrix(A), x, Matrix(b), 'VL')
 num = num.subs('V1', 1) * 'V1'  # factor out constant voltage source
 
 num = str(num).replace('G_R', 'G')

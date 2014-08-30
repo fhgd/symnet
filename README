@@ -65,10 +65,6 @@ and implementation of symnet (in german).
 
 (3.) Transistor als 3-Pol unterstuetzen und als einfaches Model ersetzen
 
-(1.) Standardbaum der KSA
-    automatisch Leerläufe einfügen, um die gewoehnlichen Knotenspannungen
-    zu erhalten
-
 * Gleichungen von Mathematica lösen lassen (Copy-Paste)
 
 * Eigene grafische Eingabe
@@ -80,7 +76,7 @@ and implementation of symnet (in german).
 
 ==== ToDo before release:
 
-* Standardbaum der KSA (automatisch Leerläufe einfügen)
+* KSA (MNA): Leerlauf (und Kurzschluss) als extra Element
 
 * Beispiele
 
@@ -93,7 +89,6 @@ and implementation of symnet (in german).
     Damit rekursive Struktur von branch_{current,voltage} und f_{i,u} entfernen
 
 * CleanUp
-
 
 ==== Verschiedene Ideen
 

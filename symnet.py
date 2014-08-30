@@ -363,3 +363,23 @@ def parse_netlist(netlist='', types={}):
             ctrl_src[brn] = vals[2]
     return Graph(graph), ctrl_src
 
+def mna(g, ctrl_src, gnd='0'):
+    """Modified Nodal Analysis"""
+    tree = []
+    isubs = {}
+    vsubs = {}
+    for node in g.nodes() - set(gnd):
+        isrc = 'I'+str(node)+gnd
+        g.add_branch(isrc, node, gnd)
+        tree.append(isrc)
+        isubs[isrc] = 0
+        vsubs['V_'+isrc] = 'V'+str(node)
+    tree = g.tree(tree)
+
+    eqs, x = cut_analysis(g, ctrl_src, tree)
+    eqs = [eq.subs(isubs) for eq in eqs]
+    eqs = [eq.subs(vsubs) for eq in eqs]
+    x = [var.subs(vsubs) for var in x]
+
+    return eqs, x, tree
+
