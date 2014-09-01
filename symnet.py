@@ -159,6 +159,8 @@ def f_i(brn, ctrl_src, types):
         return brn+'*'+branch_current(ctrl_src[brn], ctrl_src, types)
     elif type == 'I':   # i = I
         return 'I'+bindex(brn, types)
+    elif type == 'O':   # i = 0     (open circuit)
+        return '0'
     else:               # i = I_brn
         return 'I_'+brn
 
@@ -171,6 +173,8 @@ def branch_voltage(brn, ctrl_src, types):
         return f_u(brn, ctrl_src, types)
     elif type in 'H':
         return f_u(brn, ctrl_src, types)
+    elif type == 'O':   # i = 0     (open circuit)
+        return 'V'+bindex(brn, types)
     else:
         return 'V_'+brn
 
@@ -199,7 +203,7 @@ def cut_analysis(g, ctrl_src, tree, types={}):
             lhs_neg = [f_i(b, ctrl_src, types) for b in bneg]
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
-            vars.append(Calculus('V_'+tb))
+            vars.append(Calculus(branch_voltage(tb, ctrl_src, types)))
 
     # loop equations of the cobranch voltages
     cobranches = g.branches() - tree.branches()
@@ -366,20 +370,11 @@ def parse_netlist(netlist='', types={}):
 def mna(g, ctrl_src, gnd='0'):
     """Modified Nodal Analysis"""
     tree = []
-    isubs = {}
-    vsubs = {}
     for node in g.nodes() - set(gnd):
-        isrc = 'I'+str(node)+gnd
+        isrc = 'O'+str(node)
         g.add_branch(isrc, node, gnd)
         tree.append(isrc)
-        isubs[isrc] = 0
-        vsubs['V_'+isrc] = 'V'+str(node)
     tree = g.tree(tree)
-
     eqs, x = cut_analysis(g, ctrl_src, tree)
-    eqs = [eq.subs(isubs) for eq in eqs]
-    eqs = [eq.subs(vsubs) for eq in eqs]
-    x = [var.subs(vsubs) for var in x]
-
     return eqs, x, tree
 
