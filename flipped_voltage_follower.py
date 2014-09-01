@@ -50,6 +50,10 @@ print
 print eqstr
 print
 
+print 'Mathematica:'
+print pprint_mathematica(eqs, x)
+print
+
 num, denom = solve_linear(Matrix(A), x, Matrix(b), 'VOUT')
 num = num.subs('Vin', 1) * 'Vin'  # factor out constant voltage source
 subs = {'G_RC1':'s*C1', 'G_RC2':'s*C2'}

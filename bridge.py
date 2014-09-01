@@ -43,6 +43,10 @@ print
 print eqstr
 print
 
+print 'Mathematica:'
+print pprint_mathematica(eqs, x)
+print
+
 num, denom = solve_linear(Matrix(A), x, Matrix(b), 'VL')
 num = num.subs('V1', 1) * 'V1'  # factor out constant voltage source
 
@@ -51,4 +55,5 @@ denom = str(denom).replace('G_R', 'G')
 print num
 print '-' * max(len(str(num)), len(str(denom)))
 print denom
+print
 

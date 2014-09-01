@@ -341,6 +341,17 @@ def pprint_linear(A, x, b):
     lines = '\n'.join(lines)
     return lines
 
+def pprint_mathematica(eqs, x):
+    """print the network equations in mathematica syntax"""
+    cmd = []
+    cmd.append('Solve[{')
+    cmd.append(',\n'.join(['    '+str(eq)+' == 0' for eq in eqs]))
+    cmd.append('}, {')
+    cmd.append(',\n'.join(['    '+str(var) for var in x]))
+    cmd.append('}]')
+    cmd = '\n'.join(cmd)
+    return cmd
+
 def solve_linear(A, x, b, var):
     """Solve linear system Ax = b for variable var in x using Cramer's rule"""
     idx = x.index(var)  # position of desired variable in vars
