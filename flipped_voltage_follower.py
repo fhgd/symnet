@@ -33,7 +33,7 @@ RS      OUT 0
 RC2     OUT 0
 """
 g, ctrl_src = parse_netlist(netlist)
-eqs, x, tree = mna(g, ctrl_src)
+eqs, x, tree = mna(g, ctrl_src, exclude_grounded_voltage_sources=True)
 
 A, b = create_matrices(eqs, x)
 eqstr = pprint_linear(A, x, b)

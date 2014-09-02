@@ -378,10 +378,20 @@ def parse_netlist(netlist='', types={}):
             ctrl_src[brn] = vals[2]
     return Graph(graph), ctrl_src
 
-def mna(g, ctrl_src, gnd='0'):
-    """Modified Nodal Analysis"""
+def mna(g, ctrl_src, gnd='0', exclude_grounded_voltage_sources=True):
+    """Modified Nodal Analysis, but without grounded voltage sources"""
     tree = []
-    for node in g.nodes() - set(gnd):
+    nodes_vsrcs = set(gnd)
+    if exclude_grounded_voltage_sources:
+        # find all grounded voltages sources and add them into the tree
+        for brn in g.branches():
+            if brn[0] == 'V':
+                vnodes = set(g.nodes(brn))
+                if gnd in vnodes:
+                    tree.append(brn)
+                    nodes_vsrcs.update(vnodes)
+    # build the standard star-shaped tree of the mna with open circuits 'O'
+    for node in g.nodes() - nodes_vsrcs:
         isrc = 'O'+str(node)
         g.add_branch(isrc, node, gnd)
         tree.append(isrc)
