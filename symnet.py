@@ -364,6 +364,7 @@ def solve_linear(A, x, b, var):
 def parse_netlist(netlist='', types={}):
     """Return graph and controlled sources dictionary of netlist"""
     COMMENT = "*" + parse.Optional(parse.restOfLine)
+    CMD = "." + parse.Optional(parse.restOfLine)
     NAME = parse.Word(parse.alphanums+"_")
     TYPE = parse.oneOf('R V I E F G H', caseless=True)
     ELEMENT = parse.Combine(TYPE+NAME)
@@ -373,6 +374,7 @@ def parse_netlist(netlist='', types={}):
     LINE += parse.Optional(~parse.LineEnd() + NAME)
     NETLIST = parse.Dict(parse.ZeroOrMore(parse.Group(LINE)))
     NETLIST.ignore(COMMENT)
+    NETLIST.ignore(CMD)
     graph = {}
     ctrl_src = {}
     for brn, vals in NETLIST.parseString(netlist).items():
