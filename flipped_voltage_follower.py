@@ -26,7 +26,7 @@ RC1     X   0
 Rds2    X   0
 Gm2     X   0   RC2
 
-Gm1     X   OUT RC1
+Gm1     X   OUT X 0
 Rds1    X   OUT
 
 RS      OUT 0

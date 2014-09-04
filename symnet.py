@@ -173,7 +173,7 @@ def branch_voltage(brn, ctrl_src, types):
         return f_u(brn, ctrl_src, types)
     elif type in 'H':
         return f_u(brn, ctrl_src, types)
-    elif type == 'O':   # i = 0     (open circuit)
+    elif type in 'O':   # i = 0     (open circuit)
         return 'V'+bindex(brn, types)
     else:
         return 'V_'+brn
@@ -215,7 +215,7 @@ def cut_analysis(g, ctrl_src, tree, types={}):
         rhs_neg = [branch_voltage(b, ctrl_src, types) for b in lpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
         if btype(cobranch, types) not in 'VEH':
-            covolts[Calculus('V_'+cobranch)] = rhs
+            covolts[Calculus(branch_voltage(cobranch, ctrl_src, types))] = rhs
         else:
             eqs.append(Calculus(f_u(cobranch, ctrl_src, types)) - rhs)
             vars.append(Calculus('I_'+cobranch))
@@ -367,15 +367,25 @@ def parse_netlist(netlist='', types={}):
     NAME = parse.Word(parse.alphanums+"_")
     TYPE = parse.oneOf('R V I E F G H', caseless=True)
     ELEMENT = parse.Combine(TYPE+NAME)
-    LINE = ELEMENT + NAME + NAME  + parse.Optional(~parse.LineEnd() + NAME)
+    LINE = ELEMENT + NAME + NAME
+    LINE += parse.Optional(~parse.LineEnd() + NAME)
+    LINE += parse.Optional(~parse.LineEnd() + NAME)
+    LINE += parse.Optional(~parse.LineEnd() + NAME)
     NETLIST = parse.Dict(parse.ZeroOrMore(parse.Group(LINE)))
     NETLIST.ignore(COMMENT)
     graph = {}
     ctrl_src = {}
     for brn, vals in NETLIST.parseString(netlist).items():
         graph[brn] = vals[:2]
-        if btype(brn, types) in 'EFGH':
+        if btype(brn, types) in 'FH':
             ctrl_src[brn] = vals[2]
+        if btype(brn, types) in 'EG':
+            if len(vals) == 3:
+                ctrl_src[brn] = vals[2]
+            elif len(vals) > 3:
+                # insert open circuit for controlled voltage
+                graph['O'+brn] = vals[2:3+1]
+                ctrl_src[brn] = 'O'+brn
     return Graph(graph), ctrl_src
 
 def mna(g, ctrl_src, gnd='0', exclude_grounded_voltage_sources=True):
