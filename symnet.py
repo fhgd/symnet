@@ -139,6 +139,10 @@ def f_u(brn, ctrl_src, types):
     type = btype(brn, types)
     if type == 'R':     # u = R i
         return brn+'*I_'+brn
+    elif type == 'C':   # u = i / (s C)
+        return 'I_%s/(s*%s)' % (brn, brn)
+    elif type == 'L':   # u = s L i
+        return 's*%s*I_%s' % (brn, brn)
     elif type == 'H':   # u = H i_ctrl
         return brn+'*'+branch_current(ctrl_src[brn], ctrl_src, types)
     elif type == 'E':   # u = E u_ctrl
@@ -153,6 +157,10 @@ def f_i(brn, ctrl_src, types):
     type = btype(brn, types)
     if type == 'R':     # i = G_R u
         return 'G_'+brn+'*V_'+brn
+    elif type == 'C':   # i = s C u
+        return 's*%s*V_%s' % (brn, brn)
+    elif type == 'L':   # i = u / (s L)
+        return 'V_%s/(s*%s)' % (brn, brn)
     elif type == 'G':   # i = G u_ctrl
         return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src, types)
     elif type == 'F':   # i = F i_ctrl
@@ -366,7 +374,7 @@ def parse_netlist(netlist='', types={}):
     COMMENT = "*" + parse.Optional(parse.restOfLine)
     CMD = "." + parse.Optional(parse.restOfLine)
     NAME = parse.Word(parse.alphanums+"_")
-    TYPE = parse.oneOf('R V I E F G H', caseless=True)
+    TYPE = parse.oneOf('R L C V I E F G H', caseless=True)
     ELEMENT = parse.Combine(TYPE+NAME)
     LINE = ELEMENT + NAME + NAME
     LINE += parse.Optional(~parse.LineEnd() + NAME)
