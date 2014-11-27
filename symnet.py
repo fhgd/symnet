@@ -394,7 +394,7 @@ def parse_netlist(netlist='', types={}):
     COMMENT = "*" + parse.Optional(parse.restOfLine)
     CMD = "." + parse.Optional(parse.restOfLine)
     NAME = parse.Word(parse.alphanums+"_")
-    TYPE = parse.oneOf('R L C V I E F G H N U', caseless=True)
+    TYPE = parse.oneOf('R L C V I E F G H O N U', caseless=True)
     ELEMENT = parse.Combine(TYPE+NAME)
     LINE = ELEMENT + NAME + NAME
     LINE += parse.Optional(~parse.LineEnd() + NAME)
