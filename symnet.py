@@ -149,6 +149,8 @@ def f_u(brn, ctrl_src, types):
         return brn+'*'+branch_voltage(ctrl_src[brn], ctrl_src, types)
     elif type == 'V':   # u = V
         return 'V'+bindex(brn, types)
+    elif type == 'U':   # u = 0 (Nullator)
+        return '0'
     else:               # u = V_brn
         return 'V_'+brn
 
@@ -169,6 +171,8 @@ def f_i(brn, ctrl_src, types):
         return 'I'+bindex(brn, types)
     elif type == 'O':   # i = 0     (open circuit)
         return '0'
+    elif type == 'U':   # i = 0     (Nullator)
+        return '0'
     else:               # i = I_brn
         return 'I_'+brn
 
@@ -180,6 +184,8 @@ def branch_voltage(brn, ctrl_src, types):
     elif type in 'E':
         return f_u(brn, ctrl_src, types)
     elif type in 'H':
+        return f_u(brn, ctrl_src, types)
+    elif type in 'U':
         return f_u(brn, ctrl_src, types)
     elif type in 'O':   # i = 0     (open circuit)
         return 'V'+bindex(brn, types)
@@ -194,6 +200,8 @@ def branch_current(brn, ctrl_src, types):
     elif type in 'F':
         return f_i(brn, ctrl_src, types)
     elif type in 'G':
+        return f_i(brn, ctrl_src, types)
+    elif type in 'U':
         return f_i(brn, ctrl_src, types)
     else:
         return 'I_'+brn
@@ -211,7 +219,10 @@ def cut_analysis(g, ctrl_src, tree, types={}):
             lhs_neg = [f_i(b, ctrl_src, types) for b in bneg]
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
-            vars.append(Calculus(branch_voltage(tb, ctrl_src, types)))
+            if btype(tb, types) not in 'U':
+                vars.append(Calculus(branch_voltage(tb, ctrl_src, types)))
+            if btype(tb, types) in 'N':
+                vars.append(Calculus(branch_current(tb, ctrl_src, types)))
 
     # loop equations of the cobranch voltages
     cobranches = g.branches() - tree.branches()
@@ -222,11 +233,14 @@ def cut_analysis(g, ctrl_src, tree, types={}):
         rhs_pos = [branch_voltage(b, ctrl_src, types) for b in lneg]
         rhs_neg = [branch_voltage(b, ctrl_src, types) for b in lpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
-        if btype(cobranch, types) not in 'VEH':
+        if btype(cobranch, types) not in 'VEHU':
             covolts[Calculus(branch_voltage(cobranch, ctrl_src, types))] = rhs
+            if btype(cobranch, types) in 'N':
+                vars.append(Calculus('I_'+cobranch))
         else:
             eqs.append(Calculus(f_u(cobranch, ctrl_src, types)) - rhs)
-            vars.append(Calculus('I_'+cobranch))
+            if btype(cobranch, types) not in 'U':
+                vars.append(Calculus('I_'+cobranch))
 
     # finally add variables and equations of controlled sources
     for src, ctrl in ctrl_src.items():
@@ -278,7 +292,10 @@ def loop_analysis(g, ctrl_src, tree, types={}):
             lhs_neg = [f_u(b, ctrl_src, types) for b in lneg]
             lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
             eqs.append(lhs)
-            vars.append(Calculus('I_'+cobranch))
+            if btype(cobranch, types) not in 'U':
+                vars.append(Calculus('I_'+cobranch))
+            if btype(cobranch, types) in 'N':
+                vars.append(Calculus('V_'+cobranch))
 
     # cut equations of the tree currents (for substitution or additional)
     tcur = {}
@@ -288,11 +305,14 @@ def loop_analysis(g, ctrl_src, tree, types={}):
         rhs_pos = [branch_current(b, ctrl_src, types) for b in bneg]
         rhs_neg = [branch_current(b, ctrl_src, types) for b in bpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
-        if btype(tb, types) not in 'IFG':
+        if btype(tb, types) not in 'IFGU':
             tcur[Calculus('I_'+tb)] = rhs.expand()
+            if btype(tb, types) in 'N':
+                vars.append(Calculus('V_'+tb))
         else:
             eqs.append(Calculus(f_i(tb, ctrl_src, types)) - rhs)
-            vars.append(Calculus('V_'+tb))
+            if btype(tb, types) not in 'U':
+                vars.append(Calculus('V_'+tb))
 
     # finally add variables and equations of controlled sources
     for src, ctrl in ctrl_src.items():
@@ -374,7 +394,7 @@ def parse_netlist(netlist='', types={}):
     COMMENT = "*" + parse.Optional(parse.restOfLine)
     CMD = "." + parse.Optional(parse.restOfLine)
     NAME = parse.Word(parse.alphanums+"_")
-    TYPE = parse.oneOf('R L C V I E F G H', caseless=True)
+    TYPE = parse.oneOf('R L C V I E F G H N U', caseless=True)
     ELEMENT = parse.Combine(TYPE+NAME)
     LINE = ELEMENT + NAME + NAME
     LINE += parse.Optional(~parse.LineEnd() + NAME)
