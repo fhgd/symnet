@@ -356,11 +356,14 @@ def create_matrices(eqs, vars):
     if len(vars) > len(set(vars)):
         raise Exception, 'Every var in vars must be unique!'
     A, b = [], []
-    vars_zero = dict((var, 0) for var in vars)
     for eq in eqs:
-        line = [eq.subs(var, 1) - eq.subs(var, 0) for var in vars]
-        A.append(line)
-        b.append(-eq.subs(vars_zero))
+        lhs = []
+        rhs = str(-eq)
+        for var in vars:
+            lhs.append(eq.subs(var, 1) - Calculus(str(eq).replace(str(var), '0')))
+            rhs = rhs.replace(str(var), '0')
+        A.append(lhs)
+        b.append(Calculus(rhs))
     return A, b
 
 def pprint_linear(A, x, b):

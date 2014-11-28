@@ -55,9 +55,9 @@ def test_cut_i_coFi_tr_2():
     tree = g.tree(['R1', 'IQ', 'R4'])
 
     result = """
-[ G_R3 + G_R4            0        -G_R3] [ V_R4]   =         FM*IQ
-[           0  G_R1 + G_R2        -G_R2] [ V_R1]   =         FM*IQ
-[       -G_R3        -G_R2  G_R2 + G_R3] [ V_IQ]   =   -IQ - FM*IQ
+[ G_R3 + G_R4            0        -G_R3] [ V_R4]   =         IQ*FM
+[           0  G_R1 + G_R2        -G_R2] [ V_R1]   =         IQ*FM
+[       -G_R3        -G_R2  G_R2 + G_R3] [ V_IQ]   =   -IQ - IQ*FM
     """
     return g, ctrl_src, tree, result
 
@@ -74,9 +74,9 @@ def test_cut_i_coFi_tr_3():
     tree = g.tree(['R1', 'VQ', 'R4'])
 
     result = """
-[ G_R3 + G_R4            0     -FM] [ V_R4]   =              G_R3*VQ
-[           0  G_R1 + G_R2     -FM] [ V_R1]   =              G_R2*VQ
-[       -G_R3        -G_R2  1 + FM] [ I_VQ]   =   -G_R2*VQ - G_R3*VQ
+[ G_R3 + G_R4            0     -FM] [ V_R4]   =              VQ*G_R3
+[           0  G_R1 + G_R2     -FM] [ V_R1]   =              VQ*G_R2
+[       -G_R3        -G_R2  1 + FM] [ I_VQ]   =   -VQ*G_R2 - VQ*G_R3
     """
     return g, ctrl_src, tree, result
 
@@ -135,7 +135,7 @@ def test_cut_i_trFi_co_2():
     result = """
 [ G_R2 + G_R4            0         G_R2       1] [ V_R4]   =     0
 [           0  G_R1 + G_R3         G_R3       1] [ V_R1]   =     0
-[        G_R2         G_R3  G_R2 + G_R3  1 + FM] [ V_FM]   =     0
+[        G_R2         G_R3  G_R3 + G_R2  1 + FM] [ V_FM]   =     0
 [          -1           -1           -1       0] [ I_VQ]   =   -VQ
     """
     return g, ctrl_src, tree, result
@@ -153,8 +153,8 @@ def test_cut_i_coGu_tr_1():
     tree = g.tree(['R1', 'VQ', 'R4'])
 
     result = """
-[ G_R3 + G_R4            0] [ V_R4]   =   GM*VQ + G_R3*VQ
-[           0  G_R1 + G_R2] [ V_R1]   =   GM*VQ + G_R2*VQ
+[ G_R3 + G_R4            0] [ V_R4]   =   VQ*GM + VQ*G_R3
+[           0  G_R2 + G_R1] [ V_R1]   =   VQ*GM + VQ*G_R2
     """
     return g, ctrl_src, tree, result
 
@@ -172,8 +172,8 @@ def test_cut_i_coGu_tr_2():
 
     result = """
 [ G_R3 + G_R4               -GM        -G_R3] [ V_R4]   =     0
-[           0  G_R1 + G_R2 - GM        -G_R2] [ V_R1]   =     0
-[       -G_R3         GM - G_R2  G_R2 + G_R3] [ V_IQ]   =   -IQ
+[           0  G_R1 - GM + G_R2        -G_R2] [ V_R1]   =     0
+[       -G_R3        -G_R2 + GM  G_R2 + G_R3] [ V_IQ]   =   -IQ
     """
     return g, ctrl_src, tree, result
 
@@ -192,7 +192,7 @@ def test_cut_i_coGu_tr_3():
     result = """
 [ G_R3 + G_R4            0        -GM - G_R3] [ V_R4]   =     0
 [           0  G_R1 + G_R2        -GM - G_R2] [ V_R1]   =     0
-[       -G_R3        -G_R2  GM + G_R2 + G_R3] [ V_IQ]   =   -IQ
+[       -G_R3        -G_R2  G_R2 + G_R3 + GM] [ V_IQ]   =   -IQ
     """
     return g, ctrl_src, tree, result
 
@@ -209,8 +209,8 @@ def test_cut_i_coGu_tr_4():
     tree = g.tree(['R1', 'VQ', 'R4'])
 
     result = """
-[ G_R3 + G_R4            0] [ V_R4]   =   GM*VQ + G_R3*VQ
-[           0  G_R1 + G_R2] [ V_R1]   =   GM*VQ + G_R2*VQ
+[ G_R3 + G_R4            0] [ V_R4]   =   VQ*GM + VQ*G_R3
+[           0  G_R2 + G_R1] [ V_R1]   =   VQ*GM + VQ*G_R2
     """
     return g, ctrl_src, tree, result
 
@@ -227,9 +227,9 @@ def test_cut_i_coGu_co_1():
     tree = g.tree(['R1', 'R2', 'R4'])
 
     result = """
-[ G_R3 + G_R4        -G_R3        -G_R3  0] [ V_R4]   =    GM*VQ
+[ G_R3 + G_R4        -G_R3        -G_R3  0] [ V_R4]   =    VQ*GM
 [       -G_R3  G_R1 + G_R3         G_R3  1] [ V_R1]   =        0
-[       -G_R3         G_R3  G_R2 + G_R3  1] [ V_R2]   =   -GM*VQ
+[       -G_R3         G_R3  G_R3 + G_R2  1] [ V_R2]   =   -VQ*GM
 [           0           -1           -1  0] [ I_VQ]   =      -VQ
     """
     return g, ctrl_src, tree, result
@@ -247,9 +247,9 @@ def test_cut_i_coGu_co_2():
     tree = g.tree(['R1', 'IQ', 'R4'])
 
     result = """
-[ GM + G_R3 + G_R4                GM        -GM - G_R3] [ V_R4]   =     0
-[               GM  GM + G_R1 + G_R2        -GM - G_R2] [ V_R1]   =     0
-[       -GM - G_R3        -GM - G_R2  GM + G_R2 + G_R3] [ V_IQ]   =   -IQ
+[ G_R3 + G_R4 + GM                GM        -G_R3 - GM] [ V_R4]   =     0
+[               GM  G_R1 + G_R2 + GM        -G_R2 - GM] [ V_R1]   =     0
+[       -G_R3 - GM        -G_R2 - GM  G_R2 + G_R3 + GM] [ V_IQ]   =   -IQ
     """
     return g, ctrl_src, tree, result
 
@@ -268,7 +268,7 @@ def test_cut_i_trGu_co_1():
     result = """
 [ G_R2 + G_R4            0         G_R2  1] [ V_R4]   =        0
 [           0  G_R1 + G_R3         G_R3  1] [ V_R1]   =        0
-[        G_R2         G_R3  G_R2 + G_R3  1] [ V_GM]   =   -GM*VQ
+[        G_R2         G_R3  G_R3 + G_R2  1] [ V_GM]   =   -VQ*GM
 [          -1           -1           -1  0] [ I_VQ]   =      -VQ
     """
     return g, ctrl_src, tree, result
@@ -288,7 +288,7 @@ def test_cut_i_trGu_co_2():
     result = """
 [ G_R2 + G_R4            0              G_R2  1] [ V_R4]   =     0
 [           0  G_R1 + G_R3              G_R3  1] [ V_R1]   =     0
-[   GM + G_R2         G_R3  GM + G_R2 + G_R3  1] [ V_GM]   =     0
+[   G_R2 + GM         G_R3  G_R3 + G_R2 + GM  1] [ V_GM]   =     0
 [          -1           -1                -1  0] [ I_VQ]   =   -VQ
     """
     return g, ctrl_src, tree, result
@@ -308,7 +308,7 @@ def test_cut_i_trGu_tr_1():
     result = """
 [ G_R2 + G_R4            0              G_R2  1] [ V_R4]   =     0
 [           0  G_R1 + G_R3              G_R3  1] [ V_R1]   =     0
-[        G_R2         G_R3  GM + G_R2 + G_R3  1] [ V_GM]   =     0
+[        G_R2         G_R3  G_R3 + G_R2 + GM  1] [ V_GM]   =     0
 [          -1           -1                -1  0] [ I_VQ]   =   -VQ
     """
     return g, ctrl_src, tree, result
@@ -326,8 +326,8 @@ def test_cut_i_trGu_tr_2():
     tree = g.tree(['VQ', 'GM', 'R4'])
 
     result = """
-[ G_R1 + G_R2 + G_R3 + G_R4  G_R1 + G_R2] [ V_R4]   =   G_R1*VQ + G_R3*VQ
-[               G_R1 + G_R2  G_R1 + G_R2] [ V_GM]   =     G_R1*VQ - GM*VQ
+[ G_R1 + G_R2 + G_R3 + G_R4  G_R1 + G_R2] [ V_R4]   =   G_R1*VQ + VQ*G_R3
+[               G_R1 + G_R2  G_R1 + G_R2] [ V_GM]   =     G_R1*VQ - VQ*GM
     """
     return g, ctrl_src, tree, result
 
@@ -348,7 +348,7 @@ def test_cut_v_trEv_tr_1():
     result = """
 [ G_R2 + G_R4                EM*G_R2  1] [ V_R4]   =     0
 [           0  G_R1 + G_R3 + EM*G_R3  1] [ V_R1]   =     0
-[          -1                -1 - EM  0] [ I_VQ]   =   -VQ
+[          -1                -EM - 1  0] [ I_VQ]   =   -VQ
     """
     return g, ctrl_src, tree, result
 
@@ -365,7 +365,7 @@ def test_cut_v_trEv_tr_2():
     tree = g.tree(['VQ', 'EM', 'R4'])
 
     result = """
-[ G_R1 + G_R2 + G_R3 + G_R4] [ V_R4]   =   G_R1*VQ + G_R3*VQ - EM*G_R1*VQ - EM*G_R2*VQ
+[ G_R1 + G_R2 + G_R3 + G_R4] [ V_R4]   =   G_R1*VQ + VQ*G_R3 - EM*VQ*G_R1 - EM*VQ*G_R2
     """
     return g, ctrl_src, tree, result
 
@@ -385,7 +385,7 @@ def test_cut_v_trEv_co_1():
 [ G_R4            0  1     G_R2] [ V_R4]   =     0
 [    0  G_R1 + G_R3  1  EM*G_R3] [ V_R1]   =     0
 [   -1           -1  0      -EM] [ I_VQ]   =   -VQ
-[   -1            0  0   1 - EM] [ V_R2]   =     0
+[   -1            0  0  -EM + 1] [ V_R2]   =     0
     """
     return g, ctrl_src, tree, result
 
@@ -402,9 +402,9 @@ def test_cut_v_trEv_co_2():
     tree = g.tree(['R1', 'EM', 'R4'])
 
     result = """
-[ G_R2 + G_R4            0  1] [ V_R4]   =   -EM*G_R2*VQ
-[           0  G_R1 + G_R3  1] [ V_R1]   =   -EM*G_R3*VQ
-[          -1           -1  0] [ I_VQ]   =    EM*VQ - VQ
+[ G_R2 + G_R4            0  1] [ V_R4]   =   -EM*VQ*G_R2
+[           0  G_R1 + G_R3  1] [ V_R1]   =   -EM*VQ*G_R3
+[          -1           -1  0] [ I_VQ]   =   -VQ + EM*VQ
     """
     return g, ctrl_src, tree, result
 
@@ -423,7 +423,7 @@ def test_cut_v_coEv_co_1():
     result = """
 [ G_R3 + G_R4        -G_R3        -G_R3  -1  0] [ V_R4]   =        0
 [       -G_R3  G_R1 + G_R3         G_R3   0  1] [ V_R1]   =        0
-[       -G_R3         G_R3  G_R2 + G_R3   1  1] [ V_R2]   =        0
+[       -G_R3         G_R3  G_R3 + G_R2   1  1] [ V_R2]   =        0
 [           1            0           -1   0  0] [ I_EM]   =   -EM*VQ
 [           0           -1           -1   0  0] [ I_VQ]   =      -VQ
     """
@@ -444,8 +444,8 @@ def test_cut_v_coEv_co_2():
     result = """
 [ G_R3 + G_R4        -G_R3        -G_R3  -1  0] [ V_R4]   =     0
 [       -G_R3  G_R1 + G_R3         G_R3   0  1] [ V_R1]   =     0
-[       -G_R3         G_R3  G_R2 + G_R3   1  1] [ V_R2]   =     0
-[      1 - EM           EM       EM - 1   0  0] [ I_EM]   =     0
+[       -G_R3         G_R3  G_R3 + G_R2   1  1] [ V_R2]   =     0
+[     -EM + 1           EM       EM - 1   0  0] [ I_EM]   =     0
 [           0           -1           -1   0  0] [ I_VQ]   =   -VQ
     """
     return g, ctrl_src, tree, result
@@ -464,7 +464,7 @@ def test_cut_v_coEv_tr_1():
     result = """
 [ G_R3 + G_R4            0        -G_R3  -1] [ V_R4]   =     0
 [           0  G_R1 + G_R2        -G_R2  -1] [ V_R1]   =     0
-[       -G_R3        -G_R2  G_R2 + G_R3   1] [ V_IQ]   =   -IQ
+[       -G_R3        -G_R2  G_R3 + G_R2   1] [ V_IQ]   =   -IQ
 [           1            1       EM - 1   0] [ I_EM]   =     0
     """
     return g, ctrl_src, tree, result
@@ -484,8 +484,8 @@ def test_cut_v_coEv_tr_2():
     result = """
 [ G_R3 + G_R4            0        -G_R3  -1] [ V_R4]   =     0
 [           0  G_R1 + G_R2        -G_R2  -1] [ V_R1]   =     0
-[       -G_R3        -G_R2  G_R2 + G_R3   1] [ V_IQ]   =   -IQ
-[           1       1 + EM           -1   0] [ I_EM]   =     0
+[       -G_R3        -G_R2  G_R3 + G_R2   1] [ V_IQ]   =   -IQ
+[           1       EM + 1           -1   0] [ I_EM]   =     0
     """
     return g, ctrl_src, tree, result
 
@@ -505,10 +505,10 @@ def test_cut_v_trHi_tr_1():
     tree = g.tree(['R1', 'HM', 'R4'])
 
     result = """
-[ G_R2 + G_R4            0  1                G_R2*HM] [ V_R4]   =     0
+[ G_R4 + G_R2            0  1                G_R2*HM] [ V_R4]   =     0
 [           0  G_R1 + G_R3  1                G_R3*HM] [ V_R1]   =     0
 [          -1           -1  0                    -HM] [ I_VQ]   =   -VQ
-[        G_R2         G_R3  1  1 + G_R2*HM + G_R3*HM] [ I_HM]   =     0
+[        G_R2         G_R3  1  1 + G_R3*HM + G_R2*HM] [ I_HM]   =     0
     """
     return g, ctrl_src, tree, result
 
@@ -525,8 +525,8 @@ def test_cut_v_trHi_tr_2():
     tree = g.tree(['VQ', 'HM', 'R4'])
 
     result = """
-[ G_R1 + G_R2 + G_R3 + G_R4  G_R1*HM + G_R2*HM] [ V_R4]   =    G_R1*VQ + G_R3*VQ
-[              -G_R1 - G_R3        1 - G_R1*HM] [ I_VQ]   =   -G_R1*VQ - G_R3*VQ
+[ G_R1 + G_R2 + G_R3 + G_R4  G_R1*HM + G_R2*HM] [ V_R4]   =    VQ*G_R1 + VQ*G_R3
+[              -G_R1 - G_R3        1 - G_R1*HM] [ I_VQ]   =   -VQ*G_R1 - VQ*G_R3
     """
     return g, ctrl_src, tree, result
 
@@ -543,7 +543,7 @@ def test_cut_v_trHi_tr_3():
     tree = g.tree(['VQ', 'HM', 'R4'])
 
     result = """
-[ G_R1 + G_R2 + G_R3 + G_R4      G_R1*HM + G_R2*HM] [ V_R4]   =   G_R1*VQ + G_R3*VQ
+[ G_R3 + G_R1 + G_R2 + G_R4      G_R1*HM + G_R2*HM] [ V_R4]   =   G_R1*VQ + VQ*G_R3
 [               G_R1 + G_R2  1 + G_R1*HM + G_R2*HM] [ I_HM]   =             G_R1*VQ
     """
     return g, ctrl_src, tree, result
@@ -582,7 +582,7 @@ def test_cut_v_trHi_co_2():
 
     result = """
 [ G_R2 + G_R4            0  1 + G_R2*HM] [ V_R4]   =     0
-[           0  G_R1 + G_R3  1 + G_R3*HM] [ V_R1]   =     0
+[           0  G_R1 + G_R3  G_R3*HM + 1] [ V_R1]   =     0
 [          -1           -1          -HM] [ I_VQ]   =   -VQ
     """
     return g, ctrl_src, tree, result
@@ -602,7 +602,7 @@ def test_cut_v_coHi_co_1():
     result = """
 [ G_R3 + G_R4        -G_R3        -G_R3   0  -1] [ V_R4]   =     0
 [       -G_R3  G_R1 + G_R3         G_R3   1   0] [ V_R1]   =     0
-[       -G_R3         G_R3  G_R2 + G_R3   1   1] [ V_R2]   =     0
+[       -G_R3         G_R3  G_R3 + G_R2   1   1] [ V_R2]   =     0
 [           0           -1           -1   0   0] [ I_VQ]   =   -VQ
 [           1            0           -1  HM   0] [ I_HM]   =     0
     """
@@ -623,7 +623,7 @@ def test_cut_v_coHi_co_2():
     result = """
 [ G_R3 + G_R4        -G_R3        -G_R3  0  -1   0] [ V_R4]   =     0
 [       -G_R3  G_R1 + G_R3         G_R3  1   0   0] [ V_R1]   =     0
-[       -G_R3         G_R3  G_R2 + G_R3  1   1   0] [ V_R2]   =     0
+[       -G_R3         G_R3  G_R3 + G_R2  1   1   0] [ V_R2]   =     0
 [           0           -1           -1  0   0   0] [ I_VQ]   =   -VQ
 [           1            0           -1  0   0  HM] [ I_HM]   =     0
 [        G_R3        -G_R3        -G_R3  0   0   1] [ I_R3]   =     0
@@ -646,7 +646,7 @@ def test_cut_v_coHi_tr_1():
 [ G_R3 + G_R4            0        -G_R3  -1] [ V_R4]   =        0
 [           0  G_R1 + G_R2        -G_R2  -1] [ V_R1]   =        0
 [       -G_R3        -G_R2  G_R2 + G_R3   1] [ V_IQ]   =      -IQ
-[           1            1           -1   0] [ I_HM]   =   -HM*IQ
+[           1            1           -1   0] [ I_HM]   =   -IQ*HM
     """
     return g, ctrl_src, tree, result
 
