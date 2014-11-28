@@ -366,10 +366,19 @@ def create_matrices(eqs, vars):
         b.append(Calculus(rhs))
     return A, b
 
+def pprint_matrix(M):
+    """pretty print the matrix M"""
+    len_cols = [max(len(str(line[n])) for line in M) for n in range(len(M))]
+    lines = []
+    for line in M:
+        elements = ['{:>{}}'.format(e, n) for e, n in zip(line, len_cols)]
+        lines.append('   '.join(elements))
+    return '\n'.join(lines)
+
 def pprint_linear(A, x, b):
     """pretty print of the matrix equation Ax = b"""
-    eqs_str = [str(Matrix(M)).split('\n') for M in A, x, b]
-    lines = ['  [%s] [%s]   =  %s' % (e, v, r) for e, v, r in zip(*eqs_str)]
+    A_str = pprint_matrix(A).split('\n')
+    lines = ['  [%s] [%s]   =  %s' % (e, v, r) for e, v, r in zip(A_str, x, b)]
     lines = '\n'.join(lines)
     return lines
 
