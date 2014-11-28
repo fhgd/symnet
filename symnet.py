@@ -233,6 +233,7 @@ def cut_analysis(g, ctrl_src, tree, types={}):
         rhs_pos = [branch_voltage(b, ctrl_src, types) for b in lneg]
         rhs_neg = [branch_voltage(b, ctrl_src, types) for b in lpos]
         rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
+        rhs = rhs.expand()
         if btype(cobranch, types) not in 'VEHU':
             covolts[Calculus(branch_voltage(cobranch, ctrl_src, types))] = rhs
             if btype(cobranch, types) in 'N':
@@ -275,7 +276,7 @@ def cut_analysis(g, ctrl_src, tree, types={}):
                     eqs.append(v_ctrl - covolts.pop(v_ctrl))
 
     # substitute cobranch voltages by tree voltages
-    eqs = [e.subs(covolts).normal().expand() for e in eqs]
+    eqs = [e.subs(covolts).expand() for e in eqs]
     return eqs, vars
 
 def loop_analysis(g, ctrl_src, tree, types={}):
