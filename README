@@ -4,7 +4,7 @@ Symnet is a python program used for symbolic network analysis. It's main
 purpose is the extraction of the circuit equations from a electrical network
 given as a netlist. Symnet depends on
 
-    * sympycore (for dealing with the symbolic expressions)
+    * sympy or sympycore (for dealing with the symbolic expressions)
     * pyparsing (for parsing the netlist)
 
 Up to now only the basic network elements are implemented:

@@ -45,7 +45,7 @@ print pprint_mathematica(eqs, x)
 
 var = 'VOUT'
 num, denom = solve_linear(Matrix(A), x, Matrix(b), var)
-num = num.subs('Vin', 1) * 'Vin'  # factor out constant voltage source
+num = num.subs('Vin', 1) * Calculus('Vin')  # factor out constant voltage source
 
 num = str(num).replace('G_R', 'G')
 denom = str(denom).replace('G_R', 'G')

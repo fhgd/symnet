@@ -1,4 +1,6 @@
-from sympycore import Calculus, Matrix
+#~ from sympycore import Calculus, Add, Matrix
+from sympy import sympify as Calculus
+from sympy import Add, Matrix
 import pyparsing as parse
 
 class Graph(object):
@@ -215,9 +217,9 @@ def cut_analysis(g, ctrl_src, tree, types={}):
     for tb in tree.branches():
         if btype(tb, types) not in 'VEH':
             bpos, bneg = g.cut(tb, tree)
-            lhs_pos = [f_i(b, ctrl_src, types) for b in bpos]
-            lhs_neg = [f_i(b, ctrl_src, types) for b in bneg]
-            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+            lhs_pos = [Calculus(f_i(b, ctrl_src, types)) for b in bpos]
+            lhs_neg = [Calculus(f_i(b, ctrl_src, types)) for b in bneg]
+            lhs = Add(*lhs_pos) - Add(*lhs_neg)
             eqs.append(lhs)
             if btype(tb, types) not in 'U':
                 vars.append(Calculus(branch_voltage(tb, ctrl_src, types)))
@@ -230,9 +232,9 @@ def cut_analysis(g, ctrl_src, tree, types={}):
     for cobranch in cobranches:
         lpos, lneg = g.loop(cobranch, tree)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = [branch_voltage(b, ctrl_src, types) for b in lneg]
-        rhs_neg = [branch_voltage(b, ctrl_src, types) for b in lpos]
-        rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
+        rhs_pos = [Calculus(branch_voltage(b, ctrl_src, types)) for b in lneg]
+        rhs_neg = [Calculus(branch_voltage(b, ctrl_src, types)) for b in lpos]
+        rhs = Add(*rhs_pos) - Add(*rhs_neg)
         rhs = rhs.expand()
         if btype(cobranch, types) not in 'VEHU':
             covolts[Calculus(branch_voltage(cobranch, ctrl_src, types))] = rhs
@@ -259,9 +261,9 @@ def cut_analysis(g, ctrl_src, tree, types={}):
                         # add missing cut equation for i_ctrl which
                         # was omitted due to: btype(tb, types) not in 'VEH'
                         bpos, bneg = g.cut(ctrl, tree, include_tree_branch=False)
-                        lhs_pos = [f_i(b, ctrl_src, types) for b in bpos]
-                        lhs_neg = [f_i(b, ctrl_src, types) for b in bneg]
-                        lhs = i_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                        lhs_pos = [Calculus(f_i(b, ctrl_src, types)) for b in bpos]
+                        lhs_neg = [Calculus(f_i(b, ctrl_src, types)) for b in bneg]
+                        lhs = i_ctrl + Add(*lhs_pos) - Add(*lhs_neg)
                     # if i_ctrl is in cotree then var and loop equation are
                     # already added because ctrl is a voltage source
                 eqs.append(lhs)
@@ -289,9 +291,9 @@ def loop_analysis(g, ctrl_src, tree, types={}):
     for cobranch in cobranches:
         if btype(cobranch, types) not in 'IFG':
             lpos, lneg = g.loop(cobranch, tree, include_cobranch=True)
-            lhs_pos = [f_u(b, ctrl_src, types) for b in lpos]
-            lhs_neg = [f_u(b, ctrl_src, types) for b in lneg]
-            lhs = Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+            lhs_pos = [Calculus(f_u(b, ctrl_src, types)) for b in lpos]
+            lhs_neg = [Calculus(f_u(b, ctrl_src, types)) for b in lneg]
+            lhs = Add(*lhs_pos) - Add(*lhs_neg)
             eqs.append(lhs)
             if btype(cobranch, types) not in 'U':
                 vars.append(Calculus('I_'+cobranch))
@@ -303,9 +305,9 @@ def loop_analysis(g, ctrl_src, tree, types={}):
     for tb in tree.branches():
         bpos, bneg = g.cut(tb, tree, include_tree_branch=False)
         # moving (bpos, bneg) from lhs to rhs by negation
-        rhs_pos = [branch_current(b, ctrl_src, types) for b in bneg]
-        rhs_neg = [branch_current(b, ctrl_src, types) for b in bpos]
-        rhs = Calculus.Add(*rhs_pos) - Calculus.Add(*rhs_neg)
+        rhs_pos = [Calculus(branch_current(b, ctrl_src, types)) for b in bneg]
+        rhs_neg = [Calculus(branch_current(b, ctrl_src, types)) for b in bpos]
+        rhs = Add(*rhs_pos) - Add(*rhs_neg)
         if btype(tb, types) not in 'IFGU':
             tcur[Calculus('I_'+tb)] = rhs.expand()
             if btype(tb, types) in 'N':
@@ -331,9 +333,9 @@ def loop_analysis(g, ctrl_src, tree, types={}):
                         # add missing loop equation for v_ctrl which
                         # was omitted due to: btype(cobranch, types) not in 'IFG'
                         lpos, lneg = g.loop(ctrl, tree, include_cobranch=False)
-                        lhs_pos = [f_u(b, ctrl_src, types) for b in lpos]
-                        lhs_neg = [f_u(b, ctrl_src, types) for b in lneg]
-                        lhs = v_ctrl + Calculus.Add(*lhs_pos) - Calculus.Add(*lhs_neg)
+                        lhs_pos = [Calculus(f_u(b, ctrl_src, types)) for b in lpos]
+                        lhs_neg = [Calculus(f_u(b, ctrl_src, types)) for b in lneg]
+                        lhs = v_ctrl + Add(*lhs_pos) - Add(*lhs_neg)
                     # if v_ctrl is in tree then var and cut equation are
                     # already added because ctrl is a current source
                 eqs.append(lhs)
@@ -395,7 +397,7 @@ def pprint_mathematica(eqs, x):
 
 def solve_linear(A, x, b, var):
     """Solve linear system Ax = b for variable var in x using Cramer's rule"""
-    idx = x.index(var)  # position of desired variable in vars
+    idx = x.index(Calculus(var))  # position of desired variable in vars
     _A = A * 1          # coppy of A
     _A[:, idx] = b      # put the rhs vector into the idx-column of the lhs matrix
     numerator = _A.det().expand()

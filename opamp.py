@@ -27,7 +27,7 @@ print eqstr
 print
 
 num, denom = solve_linear(Matrix(A), x, Matrix(b), 'V_NR')
-num = num.subs('Vi', 1) * 'Vi'  # factor out constant voltage source
+num = num.subs('Vi', 1) * Calculus('Vi')  # factor out constant voltage source
 
 num = str(num).replace('G_R', 'G')
 denom = str(denom).replace('G_R', 'G')
