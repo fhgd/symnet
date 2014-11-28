@@ -25,6 +25,9 @@ and implementation of symnet (in german).
 
 ==== ToDo before release:
 
+* Laplace'scher Entwicklungssatz zu Determinantenberechnung implementieren
+    (oder was besseres?!)
+
 * Beispiele
 
 * Trivialgleichungen wenn möglich reduzieren
