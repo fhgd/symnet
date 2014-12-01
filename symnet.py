@@ -410,7 +410,7 @@ def parse_netlist(netlist='', types={}):
     CMD = "." + parse.Optional(parse.restOfLine)
     NAME = parse.Word(parse.alphanums+"_")
     TYPE = parse.oneOf('R L C V I E F G H O N U', caseless=True)
-    ELEMENT = parse.Combine(TYPE+NAME)
+    ELEMENT = parse.Combine(TYPE + parse.Optional(NAME))
     LINE = ELEMENT + NAME + NAME
     LINE += parse.Optional(~parse.LineEnd() + NAME)
     LINE += parse.Optional(~parse.LineEnd() + NAME)
