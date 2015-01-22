@@ -254,7 +254,7 @@ def cut_analysis(g, ctrl_src, tree, types={}):
                 vars.append(i_ctrl)
                 # try if control current can be substituted
                 # then control branch is a (controlled) current source
-                lhs = i_ctrl - f_i(ctrl, ctrl_src, types)
+                lhs = i_ctrl - Calculus(f_i(ctrl, ctrl_src, types))
                 if lhs == 0:
                     # ctrl is a voltage source
                     if ctrl in tree.branches():
