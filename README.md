@@ -99,7 +99,19 @@ for Vout:
 # Example 2: Voltage Divider
 
 Here is an example with the simple voltage divider:
-
+```
+       1
+    ,-----,
+    |     |
+    |     R1
+    |     |
+    V1    | 2
+    |     |
+    |     R2
+    |     |
+    `-----´
+       0
+```
 ```python
 >>> from symnet import *
 >>> g, ctrl_src = parse_netlist("""
@@ -107,7 +119,17 @@ Vin 1 0
 R1  1 2
 R2  2 0
 """)
+```
+
+A tree containing all nodes but without making a loop is for example
+
+```python
 >>> tree = g.tree(['Vin', 'R2'])
+```
+
+Now the loop analysis creates the equation of this simple circuit
+
+```python
 >>> eqs, x = loop_analysis(g, ctrl_src, tree)
 >>> A, b = create_matrices(eqs, x)
 >>> print pprint_linear(A, x, b)
@@ -125,7 +147,8 @@ Then sympy can be used to solve this equation for I_R1:
     ───────
     R₁ + R₂
 
-By using the modified nodal analysis the tree is build up automatically:
+By using the modified nodal analysis the tree is build up automatically
+and the node equation is solve for V2:
 
 ```python
 >>> eqs, x, tree = mna(g, ctrl_src)
