@@ -160,4 +160,5 @@ and the node equation is solve for V2:
     ───────────
     G_R1 + G_R2
 
-Further examples can be found in the sources.
+Further examples can be found in the
+[sources](https://bitbucket.org/fhgd/symnet/src).
