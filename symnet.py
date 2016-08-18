@@ -415,13 +415,19 @@ def parse_netlist(netlist='', types={}):
     LINE += parse.Optional(~parse.LineEnd() + NAME)
     LINE += parse.Optional(~parse.LineEnd() + NAME)
     LINE += parse.Optional(~parse.LineEnd() + NAME)
-    NETLIST = parse.Dict(parse.ZeroOrMore(parse.Group(LINE)))
+    NETLIST = parse.ZeroOrMore(parse.Group(LINE))
     NETLIST.ignore(COMMENT)
     NETLIST.ignore(CMD)
     graph = {}
     ctrl_src = {}
-    for brn, vals in NETLIST.parseString(netlist).items():
-        graph[brn] = vals[:2]
+    for item in NETLIST.parseString(netlist).asList():
+        brn = item[0]
+        vals = item[1:]
+        if brn not in graph:
+            graph[brn] = vals[:2]
+        else:
+            msg = 'Branch {} is already in graph: {}'.format(brn, graph[brn])
+            raise Exception(msg)
         if btype(brn, types) in 'FH':
             ctrl_src[brn] = vals[2]
         if btype(brn, types) in 'EG':
